@@ -1,41 +1,145 @@
-// src/services/UserService.js
-import dsn from "../Infra/postgres.js";
-import { hashPassword, comparePassword } from "../utils/password.js";
+import UserModel from "../models/userModel.js";
+import { hashPassword } from "../utils/password.js";
+import { validate } from "../utils/validation.js";
 
 export default class UserService {
-  static async listAll() {
-    return await dsn`SELECT id, username, role, must_change_password, is_active, created_at FROM users ORDER BY created_at DESC`;
+
+  static async getAllUsers() {
+    return await UserModel.findAll();
   }
 
-  static async getById(id) {
-    const rows = await dsn`SELECT id, username, role, must_change_password, is_active, created_at FROM users WHERE id = ${id}`;
-    return rows[0];
+  static async getUserById(id) {
+    return await UserModel.findById(id);
   }
 
-  static async deactivate(id) {
-    await dsn`UPDATE users SET is_active = false WHERE id = ${id}`;
-    return true;
+  static async createUser(data) {
+    const validation = validate(data, {
+      username: { required: true, type: "string", min: 3 },
+      password: { required: true, type: "string", min: 6 },
+      role: { required: true, type: "string", enum: ["admin", "reviewer", "pengelola", "user"] },
+      must_change_password: { type: "boolean" }
+    });
+
+    if (validation) {
+      throw { status: 400, errors: validation };
+    }
+
+    const exist = await UserModel.findByUsername(data.username);
+    if (exist) {
+      throw { status: 400, errors: "Username already exists" };
+    }
+
+    const payload = {
+      username: data.username,
+      role: data.role,
+      password_hash: await hashPassword(data.password),
+      must_change_password: data.must_change_password ?? true,
+      is_active: true,
+    };
+
+    return await UserModel.create(payload);
   }
 
-  static async activate(id) {
-    await dsn`UPDATE users SET is_active = true WHERE id = ${id}`;
-    return true;
+  static async updateUser(id, data) {
+    const validation = validate(data, {
+      username: { required: true, type: "string", min: 3 },
+      role: { required: true, type: "string", enum: ["admin", "reviewer", "pengelola", "user"] },
+      is_active: { type: "boolean" }
+    });
+
+    if (validation) {
+      throw { status: 400, errors: validation };
+    }
+
+    const exist = await UserModel.findById(id);
+    if (!exist) {
+      throw { status: 404, errors: "User not found!" };
+    }
+
+    return await UserModel.update(id, data);
   }
 
-  static async forceSetPassword(id, newPassword) {
-    const h = await hashPassword(newPassword);
-    await dsn`UPDATE users SET password_hash = ${h}, must_change_password = false WHERE id = ${id}`;
-    return true;
+  static async deleteUser(id) {
+    const exist = await UserModel.findById(id);
+    if (!exist) {
+      throw { status: 404, errors: "User not found!" };
+    }
+
+    return await UserModel.delete(id);
+  }
+
+  static async setActive(id, active = true) {
+    const validation = validate({ id, active }, {
+      active: { type: "boolean" }
+    });
+
+    if (validation) {
+      throw { status: 400, errors: validation };
+    }
+
+    const user = await UserModel.findById(id);
+    if (!user) {
+      throw { status: 404, errors: "User not found!" };
+    }
+
+    if (user.is_active === active) {
+      throw { status: 400, errors: `User is already ${active ? "active" : "inactive"}!` };
+    }
+
+    return await UserModel.setActiveStatus(id, active);
+  }
+
+  static async changePassword(id, newPassword) {
+    const validation = validate({ newPassword }, {
+      newPassword: { required: true, type: "string", min: 6 }
+    });
+
+    if (validation) {
+      throw { status: 400, errors: validation };
+    }
+
+    const exist = await UserModel.findById(id);
+    if (!exist) {
+      throw { status: 404, errors: "User not found!" };
+    }
+
+    const hashed = await hashPassword(newPassword);
+    return await UserModel.forceSetPassword(id, hashed);
   }
 
   static async findByUsername(username) {
-    const rows = await dsn`SELECT * FROM users WHERE username = ${username}`;
-    return rows[0];
+    return await UserModel.findByUsername(username);
   }
+  static async resetPassword(req, res) {
+  try {
+    const userId = req.user.id; // dari token
+    const { newPassword } = req.body;
 
-  static async createUser({ username, password, role = "reviewer", must_change_password = true }) {
-    const h = await hashPassword(password);
-    const rows = await dsn`INSERT INTO users (username, password_hash, role, must_change_password, is_active) VALUES (${username}, ${h}, ${role}, ${must_change_password}, true) RETURNING *`;
-    return rows[0];
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Password baru wajib diisi"
+      });
+    }
+
+    // hash password baru
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    // update di database
+    await UserService.changePassword(userId, newPassword);
+
+    return res.json({
+      success: true,
+      message: "Password berhasil direset"
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Terjadi kesalahan"
+    });
   }
+}
+
 }

@@ -1,66 +1,59 @@
-// controllers/AuthController.js
 import AuthService from "../services/AuthService.js";
-import { success, error } from "../utils/response.js";
+import bcrypt from "bcrypt";
+import UserService from "../services/UserService.js";
 
-class AuthController {
-
-    async login(req, res) {
+export default class AuthController {
+    
+    static async login(req, res) {
         try {
-            const { identifier, password } = req.body;
+            const { username, password } = req.body;
+            const result = await AuthService.login(username, password);
 
-            if (!identifier || !password) {
-                return error(res, "Identifier & Password wajib diisi", 400);
-            }
+            return res.json({
+                success: true,
+                message: "Login success",
+                token: result.token,
+                user: result.user
+            });
 
-            /**
-             * identifier:
-             * - admin → username
-             * - reviewer → email
-             * - pengelola → NPSN
-             */
-
-            const result = await AuthService.login(identifier, password);
-
-            return success(res, "Login berhasil", result);
         } catch (err) {
-            return error(res, err.message, 400);
+            return res.status(err.status || 500).json({
+                success: false,
+                message: err.message || "Login failed"
+            });
         }
     }
 
-    async resetPassword(req, res) {
+    static async resetPassword(req, res) {
         try {
-            const { oldPassword, newPassword, confirmPassword } = req.body;
+            const { newPassword } = req.body;
+            const userId = req.user.id; // hasil dari middleware
 
-            const userId = req.user?.id;
+            const result = await AuthService.resetPassword(userId, newPassword);
 
-            if (!userId) return error(res, "User tidak ditemukan di token", 401);
+            return res.json({ success: true, message: "Password updated" });
 
-            const updated = await AuthService.resetPassword(
-                userId,
-                oldPassword,
-                newPassword,
-                confirmPassword
-            );
-
-            return success(res, "Password berhasil diubah", updated);
         } catch (err) {
-            return error(res, err.message, 400);
+            return res.status(err.status || 500).json({
+                success: false,
+                message: err.message || "Reset failed"
+            });
         }
     }
 
-    async forgotPassword(req, res) {
+    static async forgotPassword(req, res) {
         try {
             const { username } = req.body;
 
-            if (!username) return error(res, "Username wajib diisi", 400);
+            await AuthService.forgotPassword(username);
 
-            const result = await AuthService.forgotPassword(username);
+            return res.json({ success: true, message: "Password reset link sent" });
 
-            return success(res, "Permintaan reset password diproses", result);
         } catch (err) {
-            return error(res, err.message, 400);
+            return res.status(err.status || 500).json({
+                success: false,
+                message: err.message || "Forgot password failed"
+            });
         }
     }
 }
-
-export default new AuthController();

@@ -5,44 +5,16 @@ import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
 
 const router = express.Router();
 
-// GET ALL USERS
-router.get(
-    "/",
-    authMiddleware,
-    roleMiddleware("admin"),
-    UserController.getAll
-);
+// GET user by ID
+router.get("/:id", authMiddleware.verify, roleMiddleware("admin"), UserController.getUserById);
 
-// GET USER BY ID
-router.get(
-    "/:id",
-    authMiddleware,
-    roleMiddleware("admin"),
-    UserController.getById
-);
+// CREATE user
+router.post("/", authMiddleware.verify, roleMiddleware("admin"), UserController.createUser);
 
-// CREATE USER
-router.post(
-    "/",
-    authMiddleware,
-    roleMiddleware("admin"),
-    UserController.create
-);
+// UPDATE user
+router.put("/:id", authMiddleware.verify, roleMiddleware("admin"), UserController.updateUser);
 
-// UPDATE USER
-router.put(
-    "/:id",
-    authMiddleware,
-    roleMiddleware("admin"),
-    UserController.update
-);
-
-// DELETE USER
-router.delete(
-    "/:id",
-    authMiddleware,
-    roleMiddleware("admin"),
-    UserController.remove
-);
+// DELETE user
+router.delete("/:id", authMiddleware.verify, roleMiddleware("admin"), UserController.deleteUser);
 
 export default router;
