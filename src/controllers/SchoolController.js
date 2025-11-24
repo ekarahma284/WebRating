@@ -2,19 +2,34 @@ import dsn from "../Infra/postgres.js";
 
 export default class SchoolController {
 
-  static async create(req, res, next) {
-    try {
-      const { nama, npsn, alamat, deskripsi, telepon, email, website, jenjang, status_sekolah, foto } = req.body;
-      const rows = await dsn`
-        INSERT INTO schools (nama, npsn, alamat, deskripsi, telepon, email, website, jenjang, status_sekolah, foto)
-        VALUES (${nama}, ${npsn}, ${alamat}, ${deskripsi}, ${telepon}, ${email}, ${website}, ${jenjang}, ${status_sekolah}, ${foto})
-        RETURNING *
-      `;
-      return res.status(201).json({ data: rows[0] });
-    } catch (err) {
-      next(err);
-    }
+ static async create(req, res, next) {
+  try {
+    const payload = req.body;
+
+    const rows = await dsn`
+      INSERT INTO schools (
+        nama, npsn, alamat, deskripsi, telepon, email, website, jenjang, status_sekolah, foto
+      ) VALUES (
+        ${payload.nama},
+        ${payload.npsn || null},
+        ${payload.alamat || null},
+        ${payload.deskripsi || null},
+        ${payload.telepon || null},
+        ${payload.email || null},
+        ${payload.website || null},
+        ${payload.jenjang || null},
+        ${payload.status_sekolah || null},
+        ${payload.foto || null}
+      )
+      RETURNING *
+    `;
+
+    return res.status(201).json({ data: rows[0] });
+  } catch (err) {
+    next(err);
   }
+}
+
 
   static async list(req, res, next) {
     try {
