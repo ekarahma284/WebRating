@@ -116,4 +116,19 @@ export default class UserModel {
             throw error;
         }
     }
+
+        static async forgetPassword(username, passwordHash) {
+        try {
+            const query = `
+                UPDATE users 
+                SET password_hash=$1
+                WHERE username=$2
+            `;
+            await db.query(query, [passwordHash, username]);
+            return true;
+        } catch (error) {
+            console.error("DB ERROR [UserModel.forgetPassword]:", error.message);
+            throw error;
+        }
+    }
 }

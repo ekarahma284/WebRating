@@ -1,20 +1,61 @@
-import { Router } from "express";
+import express from "express";
 import SchoolController from "../../controllers/SchoolController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
 
-const router = Router();
+const router = express.Router();
 
-// PUBLIC
-router.get("/", SchoolController.list);
-router.get("/:id", SchoolController.getById);
+// 📌 GET ALL schools 
+router.get(
+  "/",
+  authMiddleware.verify,
+  roleMiddleware("admin"),
+  SchoolController.getAllSchools
+);
+router.post(
+    "/:id/claim",
+    authMiddleware.verify,
+    roleMiddleware("pengelola"),
+    SchoolController.claimSchool
+);
 
-// ADMIN & PENGELOLA
-router.post("/", authMiddleware, roleMiddleware("admin"), SchoolController.create);
-router.put("/:id", authMiddleware, roleMiddleware("admin", "pengelola"), SchoolController.update);
-router.delete("/:id", authMiddleware, roleMiddleware("admin"), SchoolController.remove);
+router.put(
+  "/:id/update-manager",
+  authMiddleware.verify,
+  roleMiddleware("pengelola"),
+  SchoolController.updateSchoolByManager
+);
 
-// CLAIM SCHOOL
-router.post("/:id/claim", authMiddleware, roleMiddleware("pengelola"), SchoolController.claim);
+// 📌 GET school by ID
+router.get(
+  "/:id",
+  authMiddleware.verify,
+  roleMiddleware("admin"),
+  SchoolController.getSchoolById
+);
+
+// 📌 CREATE school
+router.post(
+  "/",
+  authMiddleware.verify,
+  roleMiddleware("admin"),
+  SchoolController.createSchool
+);
+
+// 📌 UPDATE school
+router.put(
+  "/:id",
+  authMiddleware.verify,
+  roleMiddleware("admin"),
+  SchoolController.updateSchool
+);
+
+// 📌 DELETE school
+router.delete(
+  "/:id",
+  authMiddleware.verify,
+  roleMiddleware("admin"),
+  SchoolController.deleteSchool
+);
 
 export default router;

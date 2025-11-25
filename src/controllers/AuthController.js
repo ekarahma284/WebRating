@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import UserService from "../services/UserService.js";
 
 export default class AuthController {
-    
+
     static async login(req, res) {
         try {
             const { username, password } = req.body;
@@ -19,7 +19,7 @@ export default class AuthController {
         } catch (err) {
             return res.status(err.status || 500).json({
                 success: false,
-                message: err.message || "Login failed"
+                message: err.message || "Username atau password salah"
             });
         }
     }
@@ -36,18 +36,25 @@ export default class AuthController {
         } catch (err) {
             return res.status(err.status || 500).json({
                 success: false,
-                message: err.message || "Reset failed"
+                message: err.message || "Reset failed",
             });
         }
     }
 
     static async forgotPassword(req, res) {
         try {
-            const { username } = req.body;
+            const { username, password, confirmPassword } = req.body;
 
-            await AuthService.forgotPassword(username);
+            if (password !== confirmPassword) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Password salah, silahkan dicoba lagi"
+                });
+            }
 
-            return res.json({ success: true, message: "Password reset link sent" });
+            await AuthService.forgotPassword(username, confirmPassword);
+
+            return res.json({ success: true, message: "Password berhasil dirubah" });
 
         } catch (err) {
             return res.status(err.status || 500).json({

@@ -1,106 +1,150 @@
-import dsn from "../Infra/postgres.js";
+import SchoolService from "../services/SchoolService.js";
+import SchoolModel from "../models/SchoolModel.js";
+import { success, error } from "../utils/response.js";
+
 
 export default class SchoolController {
 
- static async create(req, res, next) {
-  try {
-    const payload = req.body;
-
-    const rows = await dsn`
-      INSERT INTO schools (
-        nama, npsn, alamat, deskripsi, telepon, email, website, jenjang, status_sekolah, foto
-      ) VALUES (
-        ${payload.nama},
-        ${payload.npsn || null},
-        ${payload.alamat || null},
-        ${payload.deskripsi || null},
-        ${payload.telepon || null},
-        ${payload.email || null},
-        ${payload.website || null},
-        ${payload.jenjang || null},
-        ${payload.status_sekolah || null},
-        ${payload.foto || null}
-      )
-      RETURNING *
-    `;
-
-    return res.status(201).json({ data: rows[0] });
-  } catch (err) {
-    next(err);
-  }
-}
-
-
-  static async list(req, res, next) {
+  static async getAllSchools(req, res) {
     try {
-      const rows = await dsn`SELECT * FROM schools ORDER BY created_at DESC`;
-      return res.json({ data: rows });
+      const schools = await SchoolService.getAllSchools();
+
+      res.json({
+        success: true,
+        message: "Schools retrieved successfully",
+        data: schools,
+      });
     } catch (err) {
-      next(err);
+      SchoolController.handleError(res, err);
     }
   }
 
-  static async getById(req, res, next) {
+  static async getSchoolById(req, res) {
     try {
       const { id } = req.params;
-      const rows = await dsn`SELECT * FROM schools WHERE id = ${id}`;
-      if (!rows[0]) return res.status(404).json({ message: "School not found" });
-      return res.json({ data: rows[0] });
+
+      if (!id || isNaN(id)) {
+        return res.status(400).json({ success: false, message: "Invalid parameter: id is required" });
+      }
+
+      const school = await SchoolService.getSchoolById(id);
+
+      if (!school) {
+        return res.status(404).json({
+          success: false,
+          message: "School not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "School retrieved successfully",
+        data: school,
+      });
     } catch (err) {
-      next(err);
+      SchoolController.handleError(res, err);
     }
   }
 
-  static async update(req, res, next) {
+  static async createSchool(req, res) {
     try {
-      const { id } = req.params;
-      const payload = req.body;
+      const school = await SchoolService.createSchool(req.body);
 
-      await dsn`
-        UPDATE schools SET
-          nama = COALESCE(${payload.nama}, nama),
-          npsn = COALESCE(${payload.npsn}, npsn),
-          alamat = COALESCE(${payload.alamat}, alamat),
-          deskripsi = COALESCE(${payload.deskripsi}, deskripsi),
-          telepon = COALESCE(${payload.telepon}, telepon),
-          email = COALESCE(${payload.email}, email),
-          website = COALESCE(${payload.website}, website),
-          jenjang = COALESCE(${payload.jenjang}, jenjang),
-          status_sekolah = COALESCE(${payload.status_sekolah}, status_sekolah),
-          foto = COALESCE(${payload.foto}, foto)
-        WHERE id = ${id}
-      `;
-
-      return res.json({ message: "School updated" });
+      res.status(201).json({
+        success: true,
+        message: "School created successfully",
+        data: school,
+      });
     } catch (err) {
-      next(err);
+      SchoolController.handleError(res, err);
     }
   }
 
-  static async remove(req, res, next) {
+  static async claimSchool(req, res) {
     try {
-      const { id } = req.params;
-      await dsn`DELETE FROM schools WHERE id = ${id}`;
-      return res.json({ message: "School deleted" });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  static async claim(req, res, next) {
-    try {
-      const { id } = req.params;
+      const schoolId = req.params.id;
       const userId = req.user.id;
 
-      await dsn`
-        UPDATE schools 
-        SET is_claimed = true, claimed_by = ${userId}
-        WHERE id = ${id}
-      `;
+      const result = await SchoolService.claimSchool(schoolId, userId);
 
-      return res.json({ message: "School claimed" });
+      return success(res, result);
     } catch (err) {
-      next(err);
+      return error(res, err.errors || err.message, err.status);
     }
+  }
+  static async updateSchoolByManager(req, res) {
+    try {
+      const userId = req.user.id;
+      const schoolId = req.params.id;
+      const data = req.body;
+
+      // Ambil data sekolah
+      const school = await SchoolModel.findById(schoolId);
+      if (!school) return error(res, "Sekolah tidak ditemukan", 404);
+
+      // Pastikan pengelola yang klaim
+      if (school.claimed_by !== userId)
+        return error(res, "Anda tidak berhak mengubah sekolah ini", 403);
+
+      const updated = await SchoolModel.updateFull(schoolId, data);
+      return success(res, "Sekolah berhasil diperbarui", updated);
+
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
+  }
+
+  static async updateSchool(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(id)) {
+        return res.status(400).json({ success: false, message: "Invalid parameter: id is required" });
+      }
+
+      const school = await SchoolService.updateSchool(id, req.body);
+
+      res.json({
+        success: true,
+        message: "School updated successfully",
+        data: school,
+      });
+    } catch (err) {
+      SchoolController.handleError(res, err);
+    }
+  }
+
+  static async deleteSchool(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(id)) {
+        return res.status(400).json({ success: false, message: "Invalid parameter: id is required" });
+      }
+
+      await SchoolService.deleteSchool(id);
+
+      res.json({
+        success: true,
+        message: "School deleted successfully",
+      });
+    } catch (err) {
+      SchoolController.handleError(res, err);
+    }
+  }
+
+
+  // ========================
+  // 🔥 GLOBAL ERROR HANDLER
+  // ========================
+  static handleError(res, err) {
+    console.error("Controller Error:", err);
+
+    const status = err.status || 500;
+
+    res.status(status).json({
+      success: false,
+      message: err.errors || err.message || "Internal server error",
+    });
   }
 }

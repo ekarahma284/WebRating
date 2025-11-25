@@ -1,104 +1,157 @@
-// controllers/IndicatorController.js
-import dsn from "../Infra/postgres.js";
+import IndicatorModel from "../models/IndicatorModel.js";
+import IndicatorCategoryModel from "../models/IndicatorCategoryModel.js";
 
 export default class IndicatorController {
 
-    /** ======================
-     *  CATEGORY
-     * ====================== */
-    static async getCategories(req, res, next) {
-        try {
-            const rows = await dsn`SELECT * FROM indicator_categories ORDER BY id ASC`;
-            return res.json({ data: rows });
-        } catch (err) { next(err); }
+  /** ======================
+   *  CATEGORY
+   * ====================== */
+  static async getCategories(req, res) {
+    try {
+      const categories = await IndicatorCategoryModel.findAll();
+      res.json({
+        success: true,
+        message: "Categories retrieved successfully",
+        data: categories,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
 
-    static async createCategory(req, res, next) {
-        try {
-            const { name } = req.body;
-            const rows = await dsn`
-                INSERT INTO indicator_categories (name)
-                VALUES (${name}) RETURNING *
-            `;
-            return res.status(201).json({ data: rows[0] });
-        } catch (err) { next(err); }
+  static async createCategory(req, res) {
+    try {
+      const { name } = req.body;
+      if (!name) return res.status(400).json({ success: false, message: "Field 'name' is required" });
+
+      const category = await IndicatorCategoryModel.create(name);
+
+      res.status(201).json({
+        success: true,
+        message: "Category created successfully",
+        data: category,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
 
-    static async updateCategory(req, res, next) {
-        try {
-            const { id } = req.params;
-            const { name } = req.body;
+  static async updateCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const { name } = req.body;
 
-            await dsn`
-                UPDATE indicator_categories
-                SET name = COALESCE(${name}, name)
-                WHERE id = ${id}
-            `;
+      if (!id || isNaN(id)) return res.status(400).json({ success: false, message: "Invalid category ID" });
 
-            return res.json({ message: "Category updated" });
-        } catch (err) { next(err); }
+      const updated = await IndicatorCategoryModel.update(id, name);
+
+      res.json({
+        success: true,
+        message: "Category updated successfully",
+        data: updated,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
 
-    static async deleteCategory(req, res, next) {
-        try {
-            const { id } = req.params;
-            await dsn`DELETE FROM indicator_categories WHERE id = ${id}`;
-            return res.json({ message: "Category deleted" });
-        } catch (err) { next(err); }
+  static async deleteCategory(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(id)) return res.status(400).json({ success: false, message: "Invalid category ID" });
+
+      await IndicatorCategoryModel.delete(id);
+
+      res.json({
+        success: true,
+        message: "Category deleted successfully",
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
 
-    /** ======================
-     *  INDICATORS
-     * ====================== */
-    static async getIndicators(req, res, next) {
-        try {
-            const rows = await dsn`
-                SELECT i.*, c.name AS category_name
-                FROM indicators i
-                LEFT JOIN indicator_categories c ON c.id = i.category_id
-                ORDER BY i.id ASC
-            `;
-
-            return res.json({ data: rows });
-        } catch (err) { next(err); }
+  /** ======================
+   *  INDICATORS
+   * ====================== */
+  static async getIndicators(req, res) {
+    try {
+      const indicators = await IndicatorModel.findAll();
+      res.json({
+        success: true,
+        message: "Indicators retrieved successfully",
+        data: indicators,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
 
-    static async createIndicator(req, res, next) {
-        try {
-            const { category_id, name, description } = req.body;
+  static async createIndicator(req, res) {
+    try {
+      const { category_id, judul, deskripsi } = req.body;
+      if (!category_id || !judul) return res.status(400).json({ success: false, message: "'category_id' and 'judul' are required" });
 
-            const rows = await dsn`
-                INSERT INTO indicators (category_id, name, description)
-                VALUES (${category_id}, ${name}, ${description})
-                RETURNING *
-            `;
+      const indicator = await IndicatorModel.create({ category_id, judul, deskripsi });
 
-            return res.status(201).json({ data: rows[0] });
-        } catch (err) { next(err); }
+      res.status(201).json({
+        success: true,
+        message: "Indicator created successfully",
+        data: indicator,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
 
-    static async updateIndicator(req, res, next) {
-        try {
-            const { id } = req.params;
-            const { category_id, name, description } = req.body;
+  static async updateIndicator(req, res) {
+    try {
+      const { id } = req.params;
+      const { category_id, judul, deskripsi } = req.body;
 
-            await dsn`
-                UPDATE indicators SET
-                    category_id = COALESCE(${category_id}, category_id),
-                    name = COALESCE(${name}, name),
-                    description = COALESCE(${description}, description)
-                WHERE id = ${id}
-            `;
+      if (!id || isNaN(id)) return res.status(400).json({ success: false, message: "Invalid indicator ID" });
 
-            return res.json({ message: "Indicator updated" });
-        } catch (err) { next(err); }
+      const updated = await IndicatorModel.update(id, { category_id, judul, deskripsi });
+
+      res.json({
+        success: true,
+        message: "Indicator updated successfully",
+        data: updated,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
 
-    static async deleteIndicator(req, res, next) {
-        try {
-            const { id } = req.params;
-            await dsn`DELETE FROM indicators WHERE id = ${id}`;
-            return res.json({ message: "Indicator deleted" });
-        } catch (err) { next(err); }
+  static async deleteIndicator(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(id)) return res.status(400).json({ success: false, message: "Invalid indicator ID" });
+
+      await IndicatorModel.delete(id);
+
+      res.json({
+        success: true,
+        message: "Indicator deleted successfully",
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
     }
+  }
+
+  // ========================
+  // 🔥 GLOBAL ERROR HANDLER
+  // ========================
+  static handleError(res, err) {
+    console.error("Controller Error:", err);
+
+    const status = err.status || 500;
+
+    res.status(status).json({
+      success: false,
+      message: err.errors || err.message || "Internal server error",
+    });
+  }
 }

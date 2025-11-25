@@ -1,6 +1,7 @@
 import userModel from "../models/userModel.js";
-import { comparePassword } from "../utils/password.js";
+import { comparePassword, hashPassword } from "../utils/password.js";
 import jwt from "jsonwebtoken";
+import { validate } from "../utils/validation.js";
 
 export default class AuthService {
     static async login(username, password) {
@@ -37,25 +38,54 @@ export default class AuthService {
         };
     }
 
-     static async resetPassword(userId, newPassword) {
+    static async resetPassword(userId, newPassword) {
         if (!newPassword) {
             const err = new Error("Password baru wajib diisi");
             err.status = 400;
             throw err;
         }
 
-        const hashed = await bcrypt.hash(newPassword, 10);
+        const existing = await userModel.findById(userId);
+        if (!existing || existing.role === 'admin') {
+            const err = new Error("User tidak ditemukan")
+            err.status = 400;
+            throw err;
+        }
 
-        await db.user.update({
-            where: { id: userId },
-            data: { password: hashed }
-        });
+        const hashed = await hashPassword(newPassword);
+
+        await userModel.forceSetPassword(userId, hashed)
 
         return { success: true };
     }
 
-    static async forgotPassword(username) {
-        // nanti bisa kamu lengkapi
-        return true;
+    static async forgotPassword(username, newPassword) {
+        const validation = validate(
+            { username, newPassword },
+            {
+                username: { required: true, type: "string" },
+                newPassword: { required: true, type: "string" }
+            }
+        );
+
+        if (validation) {
+            const err = new Error("Validation error");
+            err.status = 400;
+            err.details = validation;
+            throw err;
+        }
+
+        const existing = await userModel.findByUsername(username);
+        if (!existing) {
+            const err = new Error("User tidak ditemukan");
+            err.status = 400;
+            throw err;
+        }
+
+        const hashedPassword = await hashPassword(newPassword);
+        await userModel.forgetPassword(username, hashedPassword);
+
+        return { success: true };
     }
+
 }
