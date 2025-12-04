@@ -2,9 +2,11 @@ import cors from "cors";
 import express from "express";
 import dsn from "./src/Infra/postgres.js";
 import router from "./src/domain/router.js";
+import dotenv from "dotenv";
 
+dotenv.config();
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT_APP
 
 // Middleware
 app.use(cors());
