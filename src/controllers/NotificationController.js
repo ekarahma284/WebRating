@@ -1,56 +1,95 @@
-// controllers/NotificationController.js
-import dsn from "../Infra/postgres.js";
+import NotificationService from "../services/NotificationService.js";
 
 export default class NotificationController {
-    
-    async getMyNotifications(req, res, next) {
-        try {
-            const userId = req.user.id;
-            const rows = await dsn`
-                SELECT * FROM notifications 
-                WHERE user_id = ${userId}
-                ORDER BY created_at DESC
-            `;
-            return res.json(rows);
-        } catch (err) {
-            next(err);
-        }
+
+  // ================================
+  // GET MY NOTIFICATIONS
+  // ================================
+  static async getMyNotifications(req, res) {
+    try {
+      const userId = req.user.id;
+
+      const notifications = await NotificationService.getMyNotifications(userId);
+
+      res.json({
+        success: true,
+        message: "Notifications retrieved successfully",
+        data: notifications,
+      });
+
+    } catch (err) {
+      NotificationController.handleError(res, err);
     }
+  }
 
-    async createNotification(req, res, next) {
-        try {
-            const userId = req.user.id;
-            const { title, message } = req.body;
+  // ================================
+  // CREATE NOTIFICATION
+  // ================================
+  static async createNotification(req, res) {
+    try {
+      const userId = req.user.id;
+      const { title, message } = req.body;
 
-            if (!title || !message) {
-                return res.status(400).json({ message: "title & message required" });
-            }
+      if (!title || !message) {
+        return res.status(400).json({
+          success: false,
+          message: "Field 'title' and 'message' are required",
+        });
+      }
 
-            const result = await dsn`
-                INSERT INTO notifications (user_id, title, message)
-                VALUES (${userId}, ${title}, ${message})
-                RETURNING *
-            `;
+      const notif = await NotificationService.createNotification(userId, {
+        title,
+        message,
+      });
 
-            return res.status(201).json(result[0]);
-        } catch (err) {
-            next(err);
-        }
+      res.status(201).json({
+        success: true,
+        message: "Notification created successfully",
+        data: notif,
+      });
+
+    } catch (err) {
+      NotificationController.handleError(res, err);
     }
+  }
 
-    async markAsRead(req, res, next) {
-        try {
-            const { id } = req.params;
+  // ================================
+  // MARK AS READ
+  // ================================
+  static async markAsRead(req, res) {
+    try {
+      const { id } = req.params;
 
-            await dsn`
-                UPDATE notifications
-                SET is_read = true
-                WHERE id = ${id}
-            `;
+      if (!id || isNaN(id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid parameter: id is required",
+        });
+      }
 
-            return res.json({ message: "Notification marked as read" });
-        } catch (err) {
-            next(err);
-        }
+      await NotificationService.markAsRead(id);
+
+      res.json({
+        success: true,
+        message: "Notification marked as read successfully",
+      });
+
+    } catch (err) {
+      NotificationController.handleError(res, err);
     }
+  }
+
+  // ================================
+  // GLOBAL ERROR HANDLER (SAMA POLA)
+  // ================================
+  static handleError(res, err) {
+    console.error("Controller Error:", err);
+
+    const status = err.status || 500;
+
+    res.status(status).json({
+      success: false,
+      message: err.errors || err.message || "Internal server error",
+    });
+  }
 }

@@ -1,44 +1,99 @@
-import dsn from "../Infra/postgres.js";
+import FileService from "../services/FileService.js";
 
 export default class FileController {
 
-  // UPLOAD
-  static async upload(req, res, next) {
+  // ================================
+  // 📌 UPLOAD FILE
+  // ================================
+  static async upload(req, res) {
     try {
       const owner_id = req.user?.id || null;
       const { kategori } = req.body;
       const path = req.file?.path || req.body.path;
 
-      const rows = await dsn`
-        INSERT INTO files (owner_id, kategori, path)
-        VALUES (${owner_id}, ${kategori}, ${path})
-        RETURNING *
-      `;
+      const file = await FileService.createFile({
+        owner_id,
+        kategori,
+        path
+      });
 
-      return res.status(201).json({ data: rows[0] });
-    } catch (err) { next(err); }
+      res.status(201).json({
+        success: true,
+        message: "File uploaded successfully",
+        data: file,
+      });
+    } catch (err) {
+      FileController.handleError(res, err);
+    }
   }
 
-  // GET FILE BY ID
-  static async getFile(req, res, next) {
-    try {
-      const { id } = req.params;
-      const rows = await dsn`SELECT * FROM files WHERE id = ${id}`;
-
-      if (!rows[0]) return res.status(404).json({ message: "File not found" });
-
-      return res.json({ data: rows[0] });
-    } catch (err) { next(err); }
-  }
-
-  // DELETE FILE
-  static async delete(req, res, next) {
+  // ================================
+  // 📌 GET FILE BY ID
+  // ================================
+  static async getFile(req, res) {
     try {
       const { id } = req.params;
 
-      await dsn`DELETE FROM files WHERE id = ${id}`;
+      if (!id || isNaN(id)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid parameter: id is required" });
+      }
 
-      return res.json({ message: "File deleted" });
-    } catch (err) { next(err); }
+      const file = await FileService.getFileById(id);
+
+      if (!file) {
+        return res.status(404).json({
+          success: false,
+          message: "File not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "File retrieved successfully",
+        data: file,
+      });
+    } catch (err) {
+      FileController.handleError(res, err);
+    }
+  }
+
+  // ================================
+  // 📌 DELETE FILE
+  // ================================
+  static async delete(req, res) {
+    try {
+      const { id } = req.params;
+
+      if (!id || isNaN(id)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid parameter: id is required" });
+      }
+
+      await FileService.deleteFile(id);
+
+      res.json({
+        success: true,
+        message: "File deleted successfully",
+      });
+    } catch (err) {
+      FileController.handleError(res, err);
+    }
+  }
+
+  // ================================
+  // 🔥 GLOBAL ERROR HANDLER
+  // ================================
+  static handleError(res, err) {
+    console.error("Controller Error:", err);
+
+    const status = err.status || 500;
+
+    res.status(status).json({
+      success: false,
+      message: err.errors || err.message || "Internal server error",
+    });
   }
 }

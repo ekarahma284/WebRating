@@ -1,43 +1,86 @@
-// src/services/FileService.js
-import dsn from "../Infra/postgres.js";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
+import FileModel from "../models/FileModel.js";
+import { validate } from "../utils/validation.js";
 import crypto from "crypto";
 
 export default class FileService {
-  // store file metadata (path expected to be public URL or server path)
-  static async saveFileMeta({ owner_id = null, kategori = null, path: filePath }) {
-    const rows = await dsn`
-      INSERT INTO files (owner_id, kategori, path)
-      VALUES (${owner_id}, ${kategori}, ${filePath})
-      RETURNING *
-    `;
-    return rows[0];
+
+  // ====================================
+  // 📌 CREATE NEW FILE
+  // ====================================
+  static async createFile(data) {
+    const validation = validate(data, {
+      owner_id: { type: "number" },
+      kategori: { required: true, type: "string", min: 2 },
+      path: { required: true, type: "string", min: 3 }
+    });
+
+    if (validation) {
+      throw { status: 400, errors: validation };
+    }
+
+    return await FileModel.create({
+      owner_id: data.owner_id || null,
+      kategori: data.kategori,
+      path: data.path
+    });
   }
 
-  static async getFile(id) {
-    const rows = await dsn`SELECT * FROM files WHERE id = ${id}`;
-    return rows[0];
+  // ====================================
+  // 📌 GET FILE BY ID
+  // ====================================
+  static async getFileById(id) {
+    const validation = validate({ id }, {
+      id: { required: true, type: "number" }
+    });
+
+    if (validation) {
+      throw { status: 400, errors: validation };
+    }
+
+    const file = await FileModel.findById(id);
+    return file;
   }
 
-  static async listAll() {
-    const rows = await dsn`SELECT * FROM files ORDER BY created_at DESC`;
-    return rows;
+  // ====================================
+  // 📌 LIST ALL
+  // ====================================
+  static async listAllFiles() {
+    return await FileModel.findAll();
   }
 
+  // ====================================
+  // 📌 DELETE FILE
+  // ====================================
   static async deleteFile(id) {
-    await dsn`DELETE FROM files WHERE id = ${id}`;
-    return true;
+    const validation = validate({ id }, {
+      id: { required: true, type: "number" }
+    });
+
+    if (validation) {
+      throw { status: 400, errors: validation };
+    }
+
+    const exist = await FileModel.findById(id);
+    if (!exist) {
+      throw { status: 404, errors: "File not found!" };
+    }
+
+    return await FileModel.delete(id);
   }
 
-  // Generate signed URL for files (simple HMAC approach)
-  // This assumes files are served via an endpoint that validates the signature.
-  static generateSignedUrl(filePath, expiresInSec = 60 * 10) {
+  // ====================================
+  // 🔐 GENERATE SIGNED URL
+  // ====================================
+  static generateSignedUrl(filePath, expiresInSec = 600) {
     const secret = process.env.FILE_SIGN_SECRET || "please_set_file_sign_secret";
     const expires = Math.floor(Date.now() / 1000) + expiresInSec;
+
     const payload = `${filePath}|${expires}`;
-    const signature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-    // Example signed url: /public/file?path=...&expires=...&sig=...
+    const signature = crypto
+      .createHmac("sha256", secret)
+      .update(payload)
+      .digest("hex");
+
     return `/public/file?path=${encodeURIComponent(filePath)}&expires=${expires}&sig=${signature}`;
   }
 }

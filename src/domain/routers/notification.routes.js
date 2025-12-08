@@ -1,13 +1,28 @@
-import { Router } from "express";
+import express from "express";
 import NotificationController from "../../controllers/NotificationController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 
-const router = Router();
-const controller = new NotificationController();
+const router = express.Router();
 
-// semua method valid, semua fungsi berbagai instance
-router.get("/", authMiddleware, controller.getMyNotifications.bind(controller));
-router.post("/", authMiddleware, controller.createNotification.bind(controller));
-router.put("/:id/read", authMiddleware, controller.markAsRead.bind(controller));
+// GET semua notifikasi milik user login
+router.get(
+  "/",
+  authMiddleware.verify,
+  NotificationController.getMyNotifications
+);
+
+// CREATE notifikasi baru (untuk user tersebut)
+router.post(
+  "/",
+  authMiddleware.verify,
+  NotificationController.createNotification
+);
+
+// MARK AS READ
+router.put(
+  "/:id/read",
+  authMiddleware.verify,
+  NotificationController.markAsRead
+);
 
 export default router;

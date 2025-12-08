@@ -1,22 +1,77 @@
-import { Router } from "express";
+import express from "express";
 import ReviewController from "../../controllers/RiviewController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
 
-const router = Router();
-const controller = new ReviewController();
+const router = express.Router();
 
+// ======================================================
 // REVIEW UTAMA
-router.post("/", authMiddleware, roleMiddleware("reviewer"), controller.createReview.bind(controller));
-router.get("/school/:school_id", controller.getReviewBySchool.bind(controller));
-router.get("/reviewer/:reviewer_id", controller.getReviewByReviewer.bind(controller));
-router.get("/:id", controller.getOneReview.bind(controller));
+// ======================================================
 
+// Create review baru (khusus reviewer)
+router.post(
+  "/",
+  authMiddleware.verify,
+  roleMiddleware("reviewer"),
+  ReviewController.createReview
+);
+
+// Ambil semua review berdasarkan sekolah
+router.get(
+  "/school/:school_id",
+  authMiddleware.verify,
+  ReviewController.getReviewBySchool
+);
+
+// Ambil semua review milik reviewer tertentu
+router.get(
+  "/reviewer/:reviewer_id",
+  authMiddleware.verify,
+  ReviewController.getReviewByReviewer
+);
+
+// Ambil detail satu review
+router.get(
+  "/:id",
+  authMiddleware.verify,
+  ReviewController.getOneReview
+);
+
+// ======================================================
 // REVIEW ITEMS
-router.post("/:review_id/items", authMiddleware, roleMiddleware("reviewer"), controller.addReviewItem.bind(controller));
+// ======================================================
 
-// RESPONSES / CHAT
-router.post("/:review_id/responses", authMiddleware, controller.addResponse.bind(controller));
-router.get("/:review_id/responses", authMiddleware, controller.getResponses.bind(controller));
+router.post(
+  "/:review_id/items",
+  authMiddleware.verify,
+  roleMiddleware("reviewer"),
+  ReviewController.addReviewItem
+);
+
+router.put(
+  "/:review_id/items/:reviewItem_id",
+  authMiddleware.verify,
+  roleMiddleware("reviewer"),
+  ReviewController.editReviewItem
+)
+
+// ======================================================
+// RESPONSES (CHAT ANTARA REVIEWER & PENGELOLA SEKOLAH)
+// ======================================================
+
+// Tambah response
+router.post(
+  "/:review_id/responses",
+  authMiddleware.verify,
+  ReviewController.addResponse
+);
+
+// Ambil semua response untuk satu review
+router.get(
+  "/:review_id/responses",
+  authMiddleware.verify,
+  ReviewController.getResponses
+);
 
 export default router;

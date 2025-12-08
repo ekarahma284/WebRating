@@ -1,21 +1,40 @@
-const db = require("../config/db");
+import db from "../config/db.js";
 
-class ReviewResponseModel {
-    constructor() {
-        this.table = "review_responses";
+export default class ReviewResponseModel {
+
+    static async create(data) {
+        try {
+            const query = `
+                INSERT INTO review_responses (review_item_id, responder_id, komentar)
+                VALUES ($1, $2, $3)
+                RETURNING *;
+            `;
+            const values = [
+                data.review_item_id,
+                data.responder_id,
+                data.komentar,
+            ];
+
+            const result = await db.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error("DB ERROR [ReviewResponseModel.create]:", error.message);
+            throw error;
+        }
     }
 
-    async create(data) {
-        const query = `
-            INSERT INTO ${this.table} (review_id, sender_id, pesan)
-            VALUES ($1,$2,$3)
-            RETURNING *;
-        `;
-        const result = await db.query(query, [
-            data.review_id, data.sender_id, data.pesan
-        ]);
-        return result.rows[0];
+    static async findByReviewItem(reviewItemId) {
+        try {
+            const query = `
+                SELECT * FROM review_responses
+                WHERE review_item_id = $1
+                ORDER BY created_at ASC;
+            `;
+            const result = await db.query(query, [reviewItemId]);
+            return result.rows;
+        } catch (error) {
+            console.error("DB ERROR [ReviewResponseModel.findByReviewItem]:", error.message);
+            throw error;
+        }
     }
 }
-
-module.exports = new ReviewResponseModel();

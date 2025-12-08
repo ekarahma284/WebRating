@@ -70,4 +70,15 @@ export default class IndicatorModel {
             throw error;
         }
     }
+
+    static async findAll() {
+        try {
+            const query = `SELECT * FROM indicators`
+            const result = await db.query(query)
+            return result.rows
+        } catch (error) {
+            console.error("DB ERROR [IndicatorModel.findAll]:", error.message);
+            throw error;
+        }
+    }
 }
