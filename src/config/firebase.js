@@ -1,51 +1,39 @@
 import admin from "firebase-admin";
 
-const privateKey = process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
-    : undefined;
+let serviceAccount = null;
 
-// Validasi ENV
-const requiredEnv = [
-    "FIREBASE_PRIVATE_KEY",
-    "FIREBASE_PROJECT_ID",
-    "FIREBASE_CLIENT_EMAIL",
-    "FIREBASE_CLIENT_ID"
-];
+// 1. Decode base64
+try {
+  const decoded = Buffer.from(
+    process.env.FIREBASE_SERVICE_ACCOUNT_BASE64,
+    "base64"
+  ).toString("utf8");
 
-requiredEnv.forEach((key) => {
-    if (!process.env[key]) {
-        console.warn(`[FIREBASE WARNING] Missing ENV: ${key}`);
-    }
-});
-
-if (!privateKey) {
-    console.error("[FIREBASE ERROR] Private key is missing or invalid!");
+  serviceAccount = JSON.parse(decoded);
+  console.log("🔥 Firebase service account decoded successfully.");
+} catch (err) {
+  console.error("❌ Failed to decode service account:", err.message);
 }
 
+// 2. Init Firebase Admin
 try {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            type: process.env.FIREBASE_TYPE,
-            project_id: process.env.FIREBASE_PROJECT_ID,
-            private_key: privateKey,
-            client_email: process.env.FIREBASE_CLIENT_EMAIL,
-            client_id: process.env.FIREBASE_CLIENT_ID,
-        }),
-    });
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
 
-    console.log("🔥 Firebase Admin initialized successfully.");
-
+  console.log("🔥 Firebase Admin initialized.");
 } catch (err) {
-    console.error("❌ Firebase Admin initialization FAILED:", err.message);
+  console.error("❌ Firebase Admin init FAILED:", err.message);
 }
 
 export const firestore = admin.firestore();
 
+// 3. Test connection
 (async () => {
-    try {
-        await firestore.listCollections();
-        console.log("✅ Firestore connection OK.");
-    } catch (err) {
-        console.error("❌ Firestore connection FAILED:", err.message);
-    }
+  try {
+    await firestore.listCollections();
+    console.log("✅ Firestore connection OK.");
+  } catch (err) {
+    console.error("❌ Firestore connection FAILED:", err.message);
+  }
 })();
