@@ -38,8 +38,8 @@ export default class UserModel {
     static async create(data) {
         try {
             const query = `
-                INSERT INTO users (role, username, password_hash, must_change_password, is_active)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO users (role, username, password_hash, must_change_password, is_active, account_req_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *;
             `;
             const values = [
@@ -48,6 +48,7 @@ export default class UserModel {
                 data.password_hash,
                 data.must_change_password ?? true,
                 data.is_active ?? true,
+                data.account_req_id ?? null,
             ];
             const result = await db.query(query, values);
             return result.rows[0];

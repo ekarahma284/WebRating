@@ -47,20 +47,22 @@ export default class UserController {
     try {
       const user = await UserService.createUser(req.body);
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
         message: "User created successfully",
         data: {
           id: user.id,
-          role: user.role,
           username: user.username,
+          role: user.role,
           created_at: user.created_at
-        },
+        }
       });
+
     } catch (err) {
-      UserController.handleError(res, err);
+      return UserController.handleError(res, err);
     }
   }
+
 
   static async updateUser(req, res) {
     try {

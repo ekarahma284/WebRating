@@ -5,32 +5,34 @@ export default class ReviewResponseModel {
     static async create(data) {
         try {
             const query = `
-                INSERT INTO review_responses (review_item_id, responder_id, komentar)
+                INSERT INTO review_responses (review_id, sender_id, pesan)
                 VALUES ($1, $2, $3)
                 RETURNING *;
             `;
             const values = [
-                data.review_item_id,
-                data.responder_id,
-                data.komentar,
+                data.review_id,
+                data.sender_id,
+                data.pesan,
             ];
 
-            const result = await db.query(query, values);
-            return result.rows[0];
+            const { rows } = await db.query(query, values);
+            return rows;
         } catch (error) {
             console.error("DB ERROR [ReviewResponseModel.create]:", error.message);
             throw error;
         }
     }
 
-    static async findByReviewItem(reviewItemId) {
+    static async findByReviewItem(review_Id) {
         try {
             const query = `
-                SELECT * FROM review_responses
-                WHERE review_item_id = $1
+                SELECT rr.*, u.username
+                FROM review_responses rr
+                LEFT JOIN users u ON u.id = rr.sender_id
+                WHERE rr.review_id = $1
                 ORDER BY created_at ASC;
             `;
-            const result = await db.query(query, [reviewItemId]);
+            const result = await db.query(query, [review_Id]);
             return result.rows;
         } catch (error) {
             console.error("DB ERROR [ReviewResponseModel.findByReviewItem]:", error.message);

@@ -25,11 +25,12 @@ router.get(
   ReviewController.getReviewBySchool
 );
 
-// Ambil semua review milik reviewer tertentu
+// Ambil Detail Review berdasarkan school_id
 router.get(
-  "/reviewer/:reviewer_id",
+  "/school/:school_id",
   authMiddleware.verify,
-  ReviewController.getReviewByReviewer
+  roleMiddleware("reviewer"),
+  ReviewController.getReviewDetailBySchoolId
 );
 
 // Ambil detail satu review

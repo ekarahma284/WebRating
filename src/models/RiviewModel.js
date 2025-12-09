@@ -101,4 +101,25 @@ export default class ReviewModel {
             throw error;
         }
     }
+
+    static async getReviewDetailBySchoolId(school_id) {
+        try {
+            const query = `
+            SELECT
+                s.nama AS nama_sekolah,
+                s.website,
+                ar.nama_lengkap as nama_reviewer,
+                r.tanggal AS tanggal_review
+            FROM reviews r
+            LEFT JOIN schools s ON r.school_id = s.id
+            LEFT JOIN users u ON r.reviewer_id = u.id
+            LEFT JOIN account_requests ar ON u.account_req_id = ar.id 
+            WHERE r.school_id = $1`
+            const result = await db.query(query, [school_id]);
+            return result.rows;
+        } catch (error) {
+            console.error("DB ERROR [ReviewModel.getReviewDetailBySchoolId]:", error.message);
+            throw error;
+        }
+    }
 }

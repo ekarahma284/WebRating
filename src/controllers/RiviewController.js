@@ -91,25 +91,20 @@ export default class ReviewController {
     }
 
     // ======================================================
-    // GET REVIEW BY REVIEWER
+    // GET REVIEW BY SCHOOL ID
     // ======================================================
-    static async getReviewByReviewer(req, res) {
+    static async getReviewDetailBySchoolId(req, res) {
         try {
-            const { reviewer_id } = req.params;
+            const { school_id } = req.params;
 
-            if (!reviewer_id || isNaN(reviewer_id)) {
+            if (!school_id) {
                 return res.status(400).json({
                     success: false,
-                    message: "Invalid parameter: reviewer_id is required"
+                    message: "Invalid parameter: school_id is required"
                 });
             }
 
-            const rows = await dsn`
-                SELECT *
-                FROM reviews
-                WHERE reviewer_id = ${reviewer_id}
-                ORDER BY tanggal DESC
-            `;
+            const rows = await RiviewService.getReviewDetail(school_id);
 
             return res.json({
                 success: true,
@@ -200,54 +195,43 @@ export default class ReviewController {
     static async addResponse(req, res) {
         try {
             const { review_id } = req.params;
-            const { message } = req.body;
-            const sender_id = req.user?.id;
+            const result = await RiviewService.addResponse({
+                review_id: review_id,
+                sender_id: req.user.id,
+                pesan: req.body.pesan
+            });
 
-            if (!message) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Field 'message' is required"
-                });
-            }
-
-            await dsn`
-                INSERT INTO review_responses (review_id, sender_id, message)
-                VALUES (${review_id}, ${sender_id}, ${message})
-            `;
-
-            return res.status(201).json({
+            res.status(201).json({
                 success: true,
-                message: "Response sent successfully"
+                message: "Komentar berhasil ditambahkan",
+                data: result
             });
 
         } catch (err) {
-            return ReviewController.handleError(res, err);
+            console.error(err);
+            res.status(err.status || 500).json({
+                success: false,
+                message: err.message
+            });
         }
     }
 
-    // ======================================================
-    // GET ALL RESPONSES
-    // ======================================================
     static async getResponses(req, res) {
         try {
-            const { review_id } = req.params;
+            const review_id = req.params.review_id;
 
-            const rows = await dsn`
-                SELECT rr.*, u.username
-                FROM review_responses rr
-                LEFT JOIN users u ON u.id = rr.sender_id
-                WHERE rr.review_id = ${review_id}
-                ORDER BY rr.tanggal ASC
-            `;
+            const responses = await RiviewService.getResponses(review_id);
 
-            return res.json({
+            res.json({
                 success: true,
-                message: "Responses retrieved successfully",
-                data: rows
+                data: responses
             });
 
         } catch (err) {
-            return ReviewController.handleError(res, err);
+            res.status(500).json({
+                success: false,
+                message: err.message
+            });
         }
     }
 

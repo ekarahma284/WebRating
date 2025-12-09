@@ -4,6 +4,8 @@ import ReviewModel from "../models/RiviewModel.js";
 import IndicatorService from "./IndicatorService.js";
 import NotificationService from "./NotificationService.js";
 import SchoolsService from "./SchoolService.js";
+import { firestore } from "../config/firebase.js";
+import ReviewResponseModel from "../models/ReviewResponseModel.js";
 
 export default class RiviewService {
 
@@ -190,25 +192,8 @@ export default class RiviewService {
     // ============================================================
     // GET REVIEW DETAIL
     // ============================================================
-    static async getReviewDetail(review_id) {
-
-        const review = (await dsn`
-            SELECT r.*, u.username AS reviewer_name
-            FROM reviews r
-            LEFT JOIN users u ON u.id = r.reviewer_id
-            WHERE r.id = ${review_id}
-        `)[0];
-
-        if (!review) return null;
-
-        const items = await dsn`
-            SELECT ri.*, i.judul
-            FROM review_items ri
-            LEFT JOIN indicators i ON ri.indicator_id = i.id
-            WHERE ri.review_id = ${review_id}
-        `;
-
-        return { review, items };
+    static async getReviewDetail(school_id) {
+        return await ReviewModel.getReviewDetailBySchoolId(school_id);
     }
 
     // ============================================================
@@ -222,25 +207,35 @@ export default class RiviewService {
             throw err;
         }
 
-        const rows = await dsn`
-            INSERT INTO review_responses (review_id, sender_id, pesan)
-            VALUES (${review_id}, ${sender_id}, ${pesan})
-            RETURNING *
-        `;
+        // 1. Simpan ke PostgreSQL
+        const rows = await ReviewResponseModel.create({
+            review_id,
+            sender_id,
+            pesan
+        });
 
-        return rows[0];
+        const response = rows[0];
+
+        // 2. Simpan ke Firestore untuk realtime
+        await firestore
+            .collection("review_comments")
+            .doc(review_id.toString())
+            .collection("comments")
+            .doc(response.id.toString())
+            .set({
+                id: response.id,
+                review_id,
+                sender_id,
+                pesan,
+                created_at: new Date()
+            });
+
+        return response;
     }
 
-    // ============================================================
-    // GET ALL RESPONSES
-    // ============================================================
+
+    // Ambil komentar (initial load)
     static async getResponses(review_id) {
-        return await dsn`
-            SELECT rr.*, u.username
-            FROM review_responses rr
-            LEFT JOIN users u ON u.id = rr.sender_id
-            WHERE rr.review_id = ${review_id}
-            ORDER BY rr.created_at ASC
-        `;
+        return await ReviewResponseModel.findByReviewItem(review_id);
     }
 }
