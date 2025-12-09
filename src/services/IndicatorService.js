@@ -33,7 +33,7 @@ export default class IndicatorService {
   }
 
   static async deleteCategory(id) {
-    if (!id || isNaN(id)) throw { status: 400, errors: "Invalid category ID" };
+    if (!id) throw { status: 400, errors: "Invalid category ID" };
     return await IndicatorCategoryModel.delete(id);
   }
 
@@ -77,7 +77,7 @@ export default class IndicatorService {
   }
 
   static async deleteIndicator(id) {
-    if (!id || isNaN(id)) throw { status: 400, errors: "Invalid indicator ID" };
+    if (!id) throw { status: 400, errors: "Invalid indicator ID" };
     return await IndicatorModel.delete(id);
   }
 }

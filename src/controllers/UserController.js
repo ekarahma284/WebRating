@@ -20,7 +20,7 @@ export default class UserController {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(id)) {
+      if (!id) {
         return res.status(400).json({ success: false, message: "Invalid parameter: id is required" });
       }
 
@@ -66,7 +66,7 @@ export default class UserController {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(id)) {
+      if (!id) {
         return res.status(400).json({ success: false, message: "Invalid parameter: id is required" });
       }
 
@@ -86,7 +86,7 @@ export default class UserController {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(id)) {
+      if (!id) {
         return res.status(400).json({ success: false, message: "Invalid parameter: id is required" });
       }
 

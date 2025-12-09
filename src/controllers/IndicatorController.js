@@ -124,22 +124,27 @@ export default class IndicatorController {
     }
   }
 
-  static async deleteIndicator(req, res) {
-    try {
-      const { id } = req.params;
+ static async deleteIndicator(req, res) {
+  try {
+    const { id } = req.params;
 
-      if (!id || isNaN(id)) return res.status(400).json({ success: false, message: "Invalid indicator ID" });
-
-      await IndicatorModel.delete(id);
-
-      res.json({
-        success: true,
-        message: "Indicator deleted successfully",
+    if (!id || isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid indicator ID"
       });
-    } catch (err) {
-      IndicatorController.handleError(res, err);
     }
+
+    await IndicatorService.deleteIndicator(id);
+
+    res.json({
+      success: true,
+      message: "Indicator deleted successfully",
+    });
+  } catch (err) {
+    IndicatorController.handleError(res, err);
   }
+}
 
   // ========================
   // 🔥 GLOBAL ERROR HANDLER

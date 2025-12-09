@@ -7,7 +7,7 @@ export default class SchoolsService {
   // 📌 GET ALL SCHOOLS
   // ============================================
   static async getAllSchools() {
-    return await SchoolModel.getAll();
+    return await SchoolModel.findAll();
   }
 
   static async claimSchool(schoolId, userId) {

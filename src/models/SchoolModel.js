@@ -58,6 +58,19 @@ export default class SchoolModel {
             throw error;
         }
     }
+    // ======================================================
+    // DELETE SCHOOL BY ID
+    // ======================================================
+    static async delete(id) {
+        try {
+            const query = `DELETE FROM ${this.table} WHERE id=$1 RETURNING *`;
+            const result = await db.query(query, [id]);
+            return result.rows[0]; // null kalau tidak ada
+        } catch (error) {
+            console.error("DB ERROR [SchoolModel.delete]:", error.message);
+            throw error;
+        }
+    }
 
     // ======================================================
     // UPDATE DATA SEKOLAH (SETELAH KLAIM DISETUJUI ADMIN)

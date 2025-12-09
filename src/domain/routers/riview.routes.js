@@ -19,8 +19,9 @@ router.post(
 
 // Ambil semua review berdasarkan sekolah
 router.get(
-  "/school/:school_id",
+  "/school",
   authMiddleware.verify,
+  roleMiddleware("reviewer"),
   ReviewController.getReviewBySchool
 );
 

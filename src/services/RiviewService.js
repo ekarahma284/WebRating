@@ -183,14 +183,8 @@ export default class RiviewService {
     // ============================================================
     // GET ALL REVIEW BY SCHOOL
     // ============================================================
-    static async getReviewsBySchool(school_id) {
-        return await dsn`
-            SELECT r.*, u.username AS reviewer_name
-            FROM reviews r
-            LEFT JOIN users u ON u.id = r.reviewer_id
-            WHERE r.school_id = ${school_id}
-            ORDER BY tanggal DESC
-        `;
+    static async getReviewsBySchoolName(school_name) {
+        return await ReviewModel.getReviewsBySchool(school_name);
     }
 
     // ============================================================

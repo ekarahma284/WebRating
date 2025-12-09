@@ -75,22 +75,9 @@ export default class ReviewController {
     // ======================================================
     static async getReviewBySchool(req, res) {
         try {
-            const { school_id } = req.params;
+            const { school_name } = req.query;
 
-            if (!school_id || isNaN(school_id)) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Invalid parameter: school_id is required"
-                });
-            }
-
-            const rows = await dsn`
-                SELECT r.*, u.username AS reviewer_name
-                FROM reviews r
-                LEFT JOIN users u ON u.id = r.reviewer_id
-                WHERE r.school_id = ${school_id}
-                ORDER BY r.tanggal DESC
-            `;
+            const rows = await RiviewService.getReviewsBySchoolName(school_name);
 
             return res.json({
                 success: true,

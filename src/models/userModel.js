@@ -82,7 +82,7 @@ export default class UserModel {
 
     static async delete(id) {
         try {
-            const query = `UPDATE users SET is_active=0 WHERE id=$1`;
+            const query = `UPDATE users SET is_active=false WHERE id=$1`;
             await db.query(query, [id]);
             return true;
         } catch (error) {
