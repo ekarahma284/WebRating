@@ -200,7 +200,6 @@ export default class RiviewService {
     // ADD RESPONSE
     // ============================================================
     static async addResponse({ review_id, sender_id, pesan }) {
-
         if (!pesan || pesan.trim() === "") {
             const err = new Error("pesan wajib diisi");
             err.status = 400;
@@ -216,8 +215,8 @@ export default class RiviewService {
 
         const response = rows[0];
 
-        // 2. Simpan ke Firestore untuk realtime
-        await firestore
+        // 2. Sinkron Firestore di background (non-blocking)
+        firestore
             .collection("review_comments")
             .doc(review_id.toString())
             .collection("comments")
@@ -228,10 +227,13 @@ export default class RiviewService {
                 sender_id,
                 pesan,
                 created_at: new Date()
-            });
+            })
+            .catch(err => console.error("Firestore sync error:", err));
 
+        // 3. Return cepat
         return response;
     }
+
 
 
     // Ambil komentar (initial load)
