@@ -4,8 +4,8 @@ import ReviewModel from "../models/RiviewModel.js";
 import IndicatorService from "./IndicatorService.js";
 import NotificationService from "./NotificationService.js";
 import SchoolsService from "./SchoolService.js";
-import { firestore } from "../config/firebase.js";
 import ReviewResponseModel from "../models/ReviewResponseModel.js";
+import { broadcastNewComment } from "../domain/routers/sse.js";
 
 export default class RiviewService {
 
@@ -200,13 +200,13 @@ export default class RiviewService {
     // ADD RESPONSE
     // ============================================================
     static async addResponse({ review_id, sender_id, pesan }) {
+
         if (!pesan || pesan.trim() === "") {
             const err = new Error("pesan wajib diisi");
             err.status = 400;
             throw err;
         }
 
-        // 1. Simpan ke PostgreSQL
         const rows = await ReviewResponseModel.create({
             review_id,
             sender_id,
@@ -215,29 +215,13 @@ export default class RiviewService {
 
         const response = rows[0];
 
-        // 2. Sinkron Firestore di background (non-blocking)
-        firestore
-            .collection("review_comments")
-            .doc(review_id.toString())
-            .collection("comments")
-            .doc(response.id.toString())
-            .set({
-                id: response.id,
-                review_id,
-                sender_id,
-                pesan,
-                created_at: new Date()
-            })
-            .catch(err => console.error("Firestore sync error:", err));
+        broadcastNewComment(response)
 
-        // 3. Return cepat
         return response;
     }
 
-
-
-    // Ambil komentar (initial load)
     static async getResponses(review_id) {
         return await ReviewResponseModel.findByReviewItem(review_id);
     }
+
 }
