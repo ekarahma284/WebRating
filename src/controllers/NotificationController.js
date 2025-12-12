@@ -1,3 +1,4 @@
+import { broadcastNewNotification } from "../domain/routers/sse.js";
 import NotificationService from "../services/NotificationService.js";
 
 export default class NotificationController {
@@ -41,6 +42,8 @@ export default class NotificationController {
         title,
         message,
       });
+
+      broadcastNewNotification(notif);
 
       res.status(201).json({
         success: true,

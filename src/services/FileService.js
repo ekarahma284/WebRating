@@ -1,4 +1,5 @@
 import FileModel from "../models/FileModel.js";
+import uploadRepository from "../models/Upload.js";
 import { validate } from "../utils/validation.js";
 import crypto from "crypto";
 
@@ -9,19 +10,19 @@ export default class FileService {
   // ====================================
   static async createFile(data) {
     const validation = validate(data, {
-      owner_id: { type: "number" },
-      kategori: { required: true, type: "string", min: 2 },
-      path: { required: true, type: "string", min: 3 }
+      kategori: { required: true, type: "string", min: 2 }
     });
 
     if (validation) {
       throw { status: 400, errors: validation };
     }
 
+    const uploaded = await uploadRepository.uploadFile(data.file);
+
     return await FileModel.create({
       owner_id: data.owner_id || null,
       kategori: data.kategori,
-      path: data.path
+      path: uploaded.url
     });
   }
 

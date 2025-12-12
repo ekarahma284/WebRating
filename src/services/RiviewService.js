@@ -5,7 +5,7 @@ import IndicatorService from "./IndicatorService.js";
 import NotificationService from "./NotificationService.js";
 import SchoolsService from "./SchoolService.js";
 import ReviewResponseModel from "../models/ReviewResponseModel.js";
-import { broadcastNewComment } from "../domain/routers/sse.js";
+import { broadcastNewComment, broadcastNewNotification } from "../domain/routers/sse.js";
 
 export default class RiviewService {
 
@@ -75,13 +75,15 @@ export default class RiviewService {
             const schoolResult = await SchoolsService.getSchoolById(school_id);
 
             if (schoolResult.claimed_by) {
-                await NotificationService.createNotification(
+                const notif = await NotificationService.createNotification(
                     schoolResult.claimed_by,
                     {
                         title: `Review Baru untuk ${schoolResult.nama}`,
                         message: `Sekolah Anda telah dinilai. Review ID: ${review_id}`
                     }
                 );
+
+                broadcastNewNotification(notif);
             }
 
             await client.query("COMMIT");

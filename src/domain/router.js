@@ -21,5 +21,6 @@ router.use("/reviews", riviewRoutes);
 router.use("/files", fileRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/uploads", uploadRoutes);
+router.use("/sse", (await import("./routers/sse.js")).default);
 
 export default router;

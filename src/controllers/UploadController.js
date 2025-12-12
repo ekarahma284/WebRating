@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import dsn from "../Infra/postgres.js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseKey = process.env.SUPABASE_KEYS;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default class UploadController {

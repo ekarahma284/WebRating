@@ -2,98 +2,142 @@ import FileService from "../services/FileService.js";
 
 export default class FileController {
 
-  // ================================
-  // 📌 UPLOAD FILE
-  // ================================
-  static async upload(req, res) {
+  // ====================================
+  // 📌 CREATE NEW FILE
+  // ====================================
+  static async createFile(req, res) {
     try {
-      const owner_id = req.user?.id || null;
-      const { kategori } = req.body;
-      const path = req.file?.path || req.body.path;
+      const data = {
+        owner_id: req.user?.id || null,
+        kategori: req.body.kategori,
+      };
 
-      const file = await FileService.createFile({
-        owner_id,
-        kategori,
-        path
+      // File dari multer
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({
+          success: false,
+          message: "File wajib diunggah!"
+        });
+      }
+
+      const result = await FileService.createFile({
+        ...data,
+        file
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         success: true,
-        message: "File uploaded successfully",
-        data: file,
+        message: "File berhasil diupload",
+        data: result
       });
+
     } catch (err) {
-      FileController.handleError(res, err);
+      return res.status(err.status || 500).json({
+        success: false,
+        errors: err.errors || err.message
+      });
     }
   }
 
-  // ================================
+  // ====================================
   // 📌 GET FILE BY ID
-  // ================================
-  static async getFile(req, res) {
+  // ====================================
+  static async getFileById(req, res) {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(id)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid parameter: id is required" });
-      }
-
-      const file = await FileService.getFileById(id);
+      const file = await FileService.getFileById(Number(id));
 
       if (!file) {
         return res.status(404).json({
           success: false,
-          message: "File not found",
+          message: "File tidak ditemukan"
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
-        message: "File retrieved successfully",
-        data: file,
+        data: file
       });
+
     } catch (err) {
-      FileController.handleError(res, err);
+      return res.status(err.status || 500).json({
+        success: false,
+        errors: err.errors || err.message
+      });
     }
   }
 
-  // ================================
+  // ====================================
+  // 📌 LIST ALL FILES
+  // ====================================
+  static async listAllFiles(req, res) {
+    try {
+      const files = await FileService.listAllFiles();
+
+      return res.json({
+        success: true,
+        data: files
+      });
+
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        errors: err.message
+      });
+    }
+  }
+
+  // ====================================
   // 📌 DELETE FILE
-  // ================================
-  static async delete(req, res) {
+  // ====================================
+  static async deleteFile(req, res) {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(id)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid parameter: id is required" });
-      }
+      await FileService.deleteFile(Number(id));
 
-      await FileService.deleteFile(id);
-
-      res.json({
+      return res.json({
         success: true,
-        message: "File deleted successfully",
+        message: "File berhasil dihapus"
       });
+
     } catch (err) {
-      FileController.handleError(res, err);
+      return res.status(err.status || 500).json({
+        success: false,
+        errors: err.errors || err.message
+      });
     }
   }
 
-  // ================================
-  // 🔥 GLOBAL ERROR HANDLER
-  // ================================
-  static handleError(res, err) {
-    console.error("Controller Error:", err);
+  // ====================================
+  // 🔐 GET SIGNED URL
+  // ====================================
+  static async getSignedUrl(req, res) {
+    try {
+      const { path } = req.query;
 
-    const status = err.status || 500;
+      if (!path) {
+        return res.status(400).json({
+          success: false,
+          message: "Parameter path wajib diisi!"
+        });
+      }
 
-    res.status(status).json({
-      success: false,
-      message: err.errors || err.message || "Internal server error",
-    });
+      const signed = FileService.generateSignedUrl(path);
+
+      return res.json({
+        success: true,
+        url: signed
+      });
+
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        errors: err.message
+      });
+    }
   }
 }

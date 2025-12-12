@@ -2,30 +2,52 @@ import express from "express";
 import FileController from "../../controllers/FileController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
+import upload from "../../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
-// UPLOAD FILE (admin & pengelola)
+// ===============================
+// 📌 UPLOAD FILE (admin & pengelola)
+// ===============================
+
+// Middleware untuk handle error multer agar tetap JSON
+const uploadHandler = (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+    next();
+  });
+};
+
 router.post(
   "/",
   authMiddleware.verify,
-  roleMiddleware("admin", "pengelola"),
-  FileController.upload
+  roleMiddleware("admin","reviewer", "pengelola"), // ➜ jika ingin dua role sekaligus
+  uploadHandler,
+  FileController.createFile
 );
 
-// GET FILE BY ID (semua user login)
+// ===============================
+// 📌 GET FILE BY ID (semua user login)
+// ===============================
 router.get(
   "/:id",
   authMiddleware.verify,
-  FileController.getFile
+  FileController.getFileById
 );
 
-// DELETE FILE (admin only)
+// ===============================
+// 📌 DELETE FILE (admin only)
+// ===============================
 router.delete(
   "/:id",
   authMiddleware.verify,
   roleMiddleware("admin"),
-  FileController.delete
+  FileController.deleteFile
 );
 
 export default router;

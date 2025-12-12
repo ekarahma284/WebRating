@@ -1,101 +1,127 @@
 // src/services/AccountRequestService.js
-import dsn from "../Infra/postgres.js";
-import AuthService from "./AuthService.js";
-import { v4 as uuidv4 } from "uuid";
+import AccountRequestModel from "../models/AccountRequestModel.js";
+import pool from "../config/db.js";
+import UserService from "./UserService.js";
+import SchoolsService from "./SchoolService.js";
 
 export default class AccountRequestService {
-  // create a new request (Reviewer / Pengelola)
+
+  // ============================================
+  // CREATE REQUEST (Reviewer / Pengelola)
+  // ============================================
   static async create(payload) {
-    // validate required fields depending on role
+    // Validate role
     if (!payload.role || !["reviewer", "pengelola"].includes(payload.role)) {
       const e = new Error("Invalid role");
       e.status = 400;
       throw e;
     }
 
+    // Reviewer validation
     if (payload.role === "reviewer") {
       if (!payload.nama_lengkap || !payload.upload_cv) {
         const e = new Error("Nama lengkap & upload_cv required for reviewer");
         e.status = 400;
         throw e;
       }
-    } else {
-      // pengelola
-      if (!payload.nama_lengkap || !payload.npsn || !payload.upload_surat_kuasa) {
+    }
+
+    // Pengelola validation
+    if (payload.role === "pengelola") {
+      if (!payload.nama_lengkap || !payload.npsn || !payload.upload_surat_kuasa || !payload.id_school) {
         const e = new Error("Nama lengkap, NPSN & upload_surat_kuasa required for pengelola");
         e.status = 400;
         throw e;
       }
     }
 
-    const row = await dsn`
-      INSERT INTO account_requests (
-        role, nama_lengkap, email, no_whatsapp, pendidikan_terakhir, profesi, jabatan, npsn, upload_cv, upload_surat_kuasa, status
-      ) VALUES (
-        ${payload.role}, ${payload.nama_lengkap},
-        ${payload.email || null}, ${payload.no_whatsapp || null},
-        ${payload.pendidikan_terakhir || null}, ${payload.profesi || null},
-        ${payload.jabatan || null}, ${payload.npsn || null},
-        ${payload.upload_cv || null}, ${payload.upload_surat_kuasa || null},
-        'pending'
-      ) RETURNING *
-    `;
-    return row[0];
+    // Save to DB
+    return await AccountRequestModel.create(payload);
   }
 
-  // admin lists requests
+  // ============================================
+  // LIST ALL REQUESTS (admin)
+  // ============================================
   static async listAll() {
-    const rows = await dsn`SELECT * FROM account_requests ORDER BY created_at DESC`;
-    return rows;
+    return await AccountRequestModel.listAll();
   }
 
+  // ============================================
+  // GET REQUEST BY ID
+  // ============================================
   static async getById(id) {
-    const rows = await dsn`SELECT * FROM account_requests WHERE id = ${id}`;
-    return rows[0];
+    return await AccountRequestModel.getById(id);
   }
 
-  // admin accepts -> create user account and set request status to accepted
+  // ============================================
+  // ACCEPT REQUEST (admin)
+  // ============================================
   static async acceptRequest(id, adminMeta = {}) {
-    // transaction: create user + update request
-    await dsn.begin();
+    const client = await pool.connect();
+    await client.query("BEGIN");
+
     try {
-      const reqRow = (await dsn`SELECT * FROM account_requests WHERE id = ${id}`)[0];
+      const reqRow = await AccountRequestModel.getById(id, client);
       if (!reqRow) throw new Error("Request not found");
 
-      // generate username and password default
-      // username: if pengelola -> use npsn if available, else normalized name
+      // =============================
+      // Generate Username
+      // =============================
       let username = null;
-      if (reqRow.role === "pengelola" && reqRow.npsn) username = reqRow.npsn;
-      else if (reqRow.email) username = reqRow.email;
-      else username = `${reqRow.nama_lengkap.toLowerCase().replace(/\s+/g, ".")}.${Math.floor(Math.random()*1000)}`;
 
-      // default password: random 8 chars
-      const rawPassword = Math.random().toString(36).slice(-8);
-      // create user
-      const createdUser = await AuthService.createUserFromRequest({
+      if (reqRow.role === "pengelola" && reqRow.npsn) {
+        username = reqRow.npsn; // username = NPSN
+      } else if (reqRow.email) {
+        username = reqRow.email.split("@")[0]; // ambil bagian depan email
+      } else {
+        username =
+          `${reqRow.nama_lengkap.toLowerCase().replace(/\s+/g, ".")}`
+          + `.${Math.floor(Math.random() * 1000)}`;
+      }
+
+      // =============================
+      // Password default random (8 char)
+      // =============================
+      const rawPassword = 'pengelola123';
+
+      // =============================
+      // Create User
+      // =============================
+      const createdUser = await UserService.createUser({
         username,
-        passwordPlain: rawPassword,
+        password: rawPassword,        // FIX → harus "password"
         role: reqRow.role,
-        extra: { whatsapp: reqRow.no_whatsapp }
+        must_change_password: true,   // User wajib ganti pass
+        account_req_id: reqRow.id,    // FIX → wajib untuk non-admin
       });
 
-      // mark request accepted
-      await dsn`UPDATE account_requests SET status = 'accepted' WHERE id = ${id}`;
+      await SchoolsService.claimSchool(reqRow.id_school, createdUser.id);
 
-      await dsn.commit();
+      // =============================
+      // Update status request
+      // =============================
+      await AccountRequestModel.updateStatus(id, "accepted", client);
 
-      // return created user info + raw password so admin can send via WA (AuthService already sent WA if number present)
-      return { user: createdUser, defaultPassword: rawPassword };
+      await client.query("COMMIT");
+
+      return {
+        user: createdUser,
+        defaultPassword: rawPassword
+      };
+
     } catch (err) {
-      await dsn.rollback();
+      await client.query("ROLLBACK");
       throw err;
     }
   }
 
-  // reject request
+
+  // ============================================
+  // REJECT REQUEST
+  // ============================================
   static async rejectRequest(id, reason = null) {
-    await dsn`UPDATE account_requests SET status = 'rejected' WHERE id = ${id}`;
-    // optionally log reason somewhere
+    await AccountRequestModel.updateStatus(id, "rejected");
+    // if needed, you can store reject reason in another table
     return true;
   }
 }

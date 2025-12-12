@@ -1,71 +1,130 @@
-import dsn from "../Infra/postgres.js";
+// src/controllers/AccountRequestController.js
+import AccountRequestService from "../services/AccountRequestService.js";
+import FileService from "../services/FileService.js";
 
 export default class AccountRequestController {
-
-  // GET ALL REQUESTS
-  static async getAll(req, res, next) {
-    try {
-      const rows = await dsn`SELECT * FROM account_requests ORDER BY created_at DESC`;
-      return res.json({ data: rows });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  // GET BY ID
-  static async getById(req, res, next) {
-    try {
-      const { id } = req.params;
-      const rows = await dsn`SELECT * FROM account_requests WHERE id = ${id}`;
-      if (!rows[0]) return res.status(404).json({ message: "Not found" });
-      return res.json({ data: rows[0] });
-    } catch (err) {
-      next(err);
-    }
-  }
-
-  // CREATE REQUEST
-  static async create(req, res, next) {
+  
+  // ============================================
+  // CREATE REQUEST (Reviewer / Pengelola)
+  // ============================================
+  static async create(req, res) {
     try {
       const payload = req.body;
-      const rows = await dsn`
-        INSERT INTO account_requests
-          (role, nama_lengkap, email, no_whatsapp, pendidikan_terakhir, profesi, jabatan, npsn, upload_cv, upload_surat_kuasa)
-        VALUES
-          (${payload.role}, ${payload.nama_lengkap}, ${payload.email}, ${payload.no_whatsapp}, ${payload.pendidikan_terakhir}, ${payload.profesi}, ${payload.jabatan}, ${payload.npsn}, ${payload.upload_cv}, ${payload.upload_surat_kuasa})
-        RETURNING *
-      `;
-      return res.status(201).json({ data: rows[0] });
-    } catch (err) {
-      next(err);
-    }
-  }
 
-  // UPDATE STATUS
-  static async updateStatus(req, res, next) {
-    try {
-      const { id } = req.params;
-      const { status } = req.body; // pending, accepted, rejected
+      // ============================================
+      // HANDLE FILE UPLOAD
+      // req.files = { upload_cv: [...], upload_surat_kuasa: [...] }
+      // ============================================
 
-      if (!["pending","accepted","rejected"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status" });
+      if (payload.role === "reviewer") {
+        if (req.files?.upload_cv?.[0]) {
+          const file = req.files.upload_cv[0];
+
+          const saved = await FileService.createFile({
+            kategori: "cv",
+            file,
+            owner_id: null
+          });
+
+          payload.upload_cv = saved.path;
+        }
       }
 
-      await dsn`UPDATE account_requests SET status = ${status} WHERE id = ${id}`;
-      return res.json({ message: "Status updated" });
-    } catch (err) {
-      next(err);
+      if (payload.role === "pengelola") {
+        if (req.files?.upload_surat_kuasa?.[0]) {
+          const file = req.files.upload_surat_kuasa[0];
+
+          const saved = await FileService.createFile({
+            kategori: "surat_kuasa",
+            file,
+            owner_id: null
+          });
+
+          payload.upload_surat_kuasa = saved.path;
+        }
+      }
+
+      const result = await AccountRequestService.create(payload);
+
+      return res.status(201).json({
+        success: true,
+        message: "Account request created successfully",
+        data: result
+      });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(error.status || 500).json({
+        success: false,
+        message: error.message || "Internal server error"
+      });
     }
   }
 
-  // DELETE REQUEST
-  static async delete(req, res, next) {
+  // ============================================
+  // GET ALL REQUESTS
+  // ============================================
+  static async list(req, res) {
     try {
-      const { id } = req.params;
-      await dsn`DELETE FROM account_requests WHERE id = ${id}`;
-      return res.json({ message: "Request deleted" });
-    } catch (err) {
-      next(err);
+      const rows = await AccountRequestService.listAll();
+      return res.json({ success: true, data: rows });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // ============================================
+  // GET REQUEST BY ID
+  // ============================================
+  static async getById(req, res) {
+    try {
+      const row = await AccountRequestService.getById(req.params.id);
+      if (!row) return res.status(404).json({ success: false, message: "Request not found" });
+
+      return res.json({ success: true, data: row });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // ============================================
+  // ACCEPT REQUEST
+  // ============================================
+  static async accept(req, res) {
+    try {
+      const result = await AccountRequestService.acceptRequest(req.params.id);
+
+      return res.json({
+        success: true,
+        message: "Request accepted successfully",
+        data: result
+      });
+
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // ============================================
+  // REJECT REQUEST
+  // ============================================
+  static async reject(req, res) {
+    try {
+      await AccountRequestService.rejectRequest(req.params.id, req.body.reason);
+
+      return res.json({
+        success: true,
+        message: "Request rejected successfully"
+      });
+
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message
+      });
     }
   }
 }
