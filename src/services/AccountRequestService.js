@@ -52,6 +52,96 @@ export default class AccountRequestService {
   static async getById(id) {
     return await AccountRequestModel.getById(id);
   }
+  // ============================================
+  // ACCEPT REQUEST (admin)
+  // ============================================
+  static async acceptRequest(id, adminMeta = {}) {
+    const client = await pool.connect();
+    await client.query("BEGIN");
+
+    try {
+      const reqRow = await AccountRequestModel.getById(id, client);
+      if (!reqRow) throw new Error("Request not found");
+
+      // =============================
+      // Generate Username
+      // =============================
+      let username = null;
+
+      if (reqRow.role === "pengelola" && reqRow.npsn) {
+        username = reqRow.npsn; // username = NPSN
+      } else if (reqRow.email) {
+        username = reqRow.email.split("@")[0]; // ambil depan email
+      } else {
+        username =
+          `${reqRow.nama_lengkap.toLowerCase().replace(/\s+/g, ".")}` +
+          `.${Math.floor(Math.random() * 1000)}`;
+      }
+
+      let rawPassword = null;
+
+      // =============================
+      // CASE: PENGELOLA
+      // =============================
+      if (reqRow.role === "pengelola") {
+
+        rawPassword = "pengelola123";
+
+        const createdUser = await UserService.createUser({
+          username,
+          password: rawPassword,
+          role: reqRow.role,
+          must_change_password: true,
+          account_req_id: reqRow.id,
+        }, client);
+
+        // Claim sekolah untuk pengelola
+        await SchoolsService.claimSchool(reqRow.id_school, createdUser.id);
+
+        await AccountRequestModel.updateStatus(id, "accepted", client);
+        await client.query("COMMIT");
+
+        return {
+          user: createdUser,
+          defaultPassword: rawPassword
+        };
+      }
+
+      // =============================
+      // CASE: REVIEWER (BARU DITAMBAHKAN)
+      // =============================
+      if (reqRow.role === "reviewer") {
+
+        rawPassword = "reviewer123";
+
+        const createdUser = await UserService.createUser({
+          username,
+          password: rawPassword,
+          role: "reviewer",
+          must_change_password: true,
+          account_req_id: reqRow.id,
+        }, client);
+
+        // Reviewer TIDAK klaim sekolah
+
+        await AccountRequestModel.updateStatus(id, "accepted", client);
+        await client.query("COMMIT");
+
+        return {
+          user: createdUser,
+          defaultPassword: rawPassword
+        };
+      }
+
+      throw new Error("Unknown role");
+
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
 
   // ============================================
   // ACCEPT REQUEST (admin)

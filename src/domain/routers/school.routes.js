@@ -8,10 +8,9 @@ const router = express.Router();
 // 📌 GET ALL schools 
 router.get(
   "/",
-  authMiddleware.verify,
-  roleMiddleware("admin"),
   SchoolController.getAllSchools
 );
+
 router.post(
     "/:id/claim",
     authMiddleware.verify,
