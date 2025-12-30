@@ -26,10 +26,15 @@ router.put(
 );
 
 // 📌 GET school by ID
+// router.get(
+//   "/:id",
+//   authMiddleware.verify,
+//   roleMiddleware("admin"),
+//   SchoolController.getSchoolById
+// );
+
 router.get(
   "/:id",
-  authMiddleware.verify,
-  roleMiddleware("admin"),
   SchoolController.getSchoolById
 );
 
