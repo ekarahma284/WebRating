@@ -36,6 +36,24 @@ export default class UserModel {
     }
   }
 
+  /**
+   * Find user by username including password_hash for authentication.
+   * Use this ONLY for login/password comparison - never for API responses.
+   */
+  static async findByUsernameWithPassword(username) {
+    try {
+      const query = `SELECT ${baseUserFields}, password_hash FROM users WHERE username=$1`;
+      const result = await db.query(query, [username]);
+      return result.rows[0];
+    } catch (error) {
+      console.error(
+        "DB ERROR [UserModel.findByUsernameWithPassword]:",
+        error.message
+      );
+      throw error;
+    }
+  }
+
   static async create(data) {
     try {
       const query = `
