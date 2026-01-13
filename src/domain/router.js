@@ -9,6 +9,7 @@ import riviewRoutes from "./routers/riview.routes.js";
 import fileRoutes from "./routers/file.routes.js";
 import notificationRoutes from "./routers/notification.routes.js";
 import uploadRoutes from "./routers/upload.routes.js";
+import summaryRoutes from "./routers/summary.routes.js";
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.use("/reviews", riviewRoutes);
 router.use("/files", fileRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/uploads", uploadRoutes);
+router.use("/summary", summaryRoutes);
 router.use("/sse", (await import("./routers/sse.js")).default);
 
 export default router;
