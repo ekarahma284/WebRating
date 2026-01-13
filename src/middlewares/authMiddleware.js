@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
 import { error } from "../utils/response.js";
+import TokenBlacklistModel from "../models/TokenBlacklistModel.js";
 
 class authMiddleware {
   // ================================
   // 🔐 VERIFY ACCESS TOKEN
   // ================================
-  static verify(req, res, next) {
+  static async verify(req, res, next) {
     try {
       const header = req.headers.authorization;
 
@@ -14,6 +15,12 @@ class authMiddleware {
       }
 
       const token = header.split(" ")[1];
+
+      // Check if token is blacklisted
+      const isBlacklisted = await TokenBlacklistModel.isBlacklisted(token);
+      if (isBlacklisted) {
+        return error(res, "Token telah di-logout", 401);
+      }
 
       let decoded;
       try {

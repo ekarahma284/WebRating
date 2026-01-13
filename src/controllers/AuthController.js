@@ -1,6 +1,4 @@
 import AuthService from "../services/AuthService.js";
-import bcrypt from "bcrypt";
-import UserService from "../services/UserService.js";
 
 export default class AuthController {
 
@@ -29,7 +27,7 @@ export default class AuthController {
             const { newPassword } = req.body;
             const userId = req.user.id; // hasil dari middleware
 
-            const result = await AuthService.resetPassword(userId, newPassword);
+            await AuthService.resetPassword(userId, newPassword);
 
             return res.json({ success: true, message: "Password updated" });
 
@@ -60,6 +58,33 @@ export default class AuthController {
             return res.status(err.status || 500).json({
                 success: false,
                 message: err.message || "Forgot password failed"
+            });
+        }
+    }
+
+    static async logout(req, res) {
+        try {
+            const header = req.headers.authorization;
+
+            if (!header || !header.startsWith("Bearer ")) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Token tidak ditemukan"
+                });
+            }
+
+            const token = header.split(" ")[1];
+            await AuthService.logout(token);
+
+            return res.json({
+                success: true,
+                message: "Logout berhasil"
+            });
+
+        } catch (err) {
+            return res.status(err.status || 500).json({
+                success: false,
+                message: err.message || "Logout failed"
             });
         }
     }

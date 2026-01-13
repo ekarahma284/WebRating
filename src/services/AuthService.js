@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
+import TokenBlacklistModel from "../models/TokenBlacklistModel.js";
 import { comparePassword, hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
 
@@ -86,5 +87,26 @@ export default class AuthService {
     await userModel.forgetPassword(username, hashedPassword);
 
     return { success: true };
+  }
+
+  static async logout(token) {
+    // Decode token to get expiration time
+    const decoded = jwt.decode(token);
+
+    if (!decoded || !decoded.exp) {
+      throw { status: 400, message: "Invalid token" };
+    }
+
+    // Convert exp (Unix timestamp) to Date
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    // Add token to blacklist
+    await TokenBlacklistModel.add(token, expiresAt);
+
+    return { success: true };
+  }
+
+  static async isTokenBlacklisted(token) {
+    return await TokenBlacklistModel.isBlacklisted(token);
   }
 }
