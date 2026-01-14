@@ -1,5 +1,6 @@
 import IndicatorModel from "../models/IndicatorModel.js";
 import IndicatorCategoryModel from "../models/IndicatorCategoryModel.js";
+import IndicatorService from "../services/IndicatorService.js";
 
 export default class IndicatorController {
 
@@ -13,6 +14,21 @@ export default class IndicatorController {
         success: true,
         message: "Categories retrieved successfully",
         data: categories,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
+    }
+  }
+
+  static async getCategoryById(req, res) {
+    try {
+      const { id } = req.params;
+      const category = await IndicatorService.getCategoryById(id);
+
+      res.json({
+        success: true,
+        message: "Category retrieved successfully",
+        data: category,
       });
     } catch (err) {
       IndicatorController.handleError(res, err);
@@ -59,9 +75,7 @@ export default class IndicatorController {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(id)) return res.status(400).json({ success: false, message: "Invalid category ID" });
-
-      await IndicatorCategoryModel.delete(id);
+      await IndicatorService.deleteCategory(id);
 
       res.json({
         success: true,
@@ -78,6 +92,36 @@ export default class IndicatorController {
   static async getIndicators(req, res) {
     try {
       const indicators = await IndicatorModel.findAll();
+      res.json({
+        success: true,
+        message: "Indicators retrieved successfully",
+        data: indicators,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
+    }
+  }
+
+  static async getIndicatorById(req, res) {
+    try {
+      const { id } = req.params;
+      const indicator = await IndicatorService.getIndicatorById(id);
+
+      res.json({
+        success: true,
+        message: "Indicator retrieved successfully",
+        data: indicator,
+      });
+    } catch (err) {
+      IndicatorController.handleError(res, err);
+    }
+  }
+
+  static async getIndicatorsByCategory(req, res) {
+    try {
+      const { categoryId } = req.params;
+      const indicators = await IndicatorService.getIndicatorsByCategory(categoryId);
+
       res.json({
         success: true,
         message: "Indicators retrieved successfully",

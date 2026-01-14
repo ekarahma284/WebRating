@@ -5,6 +5,20 @@ export default class IndicatorCategoryModel {
     static table = "indicators_category";
 
     // ======================================================
+    // AMBIL KATEGORI BERDASARKAN ID
+    // ======================================================
+    static async findById(id) {
+        try {
+            const query = `SELECT * FROM ${this.table} WHERE id=$1`;
+            const result = await db.query(query, [id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error("DB ERROR [IndicatorCategoryModel.findById]:", error.message);
+            throw error;
+        }
+    }
+
+    // ======================================================
     // BUAT KATEGORI BARU
     // ======================================================
     static async create(nama) {
@@ -47,6 +61,20 @@ export default class IndicatorCategoryModel {
             return result.rows[0];
         } catch (error) {
             console.error("DB ERROR [IndicatorCategoryModel.update]:", error.message);
+            throw error;
+        }
+    }
+
+    // ======================================================
+    // CHECK IF CATEGORY HAS INDICATORS
+    // ======================================================
+    static async hasIndicators(id) {
+        try {
+            const query = `SELECT COUNT(*) FROM indicators WHERE category_id = $1`;
+            const result = await db.query(query, [id]);
+            return parseInt(result.rows[0].count) > 0;
+        } catch (error) {
+            console.error("DB ERROR [IndicatorCategoryModel.hasIndicators]:", error.message);
             throw error;
         }
     }
