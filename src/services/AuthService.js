@@ -3,6 +3,7 @@ import userModel from "../models/userModel.js";
 import TokenBlacklistModel from "../models/TokenBlacklistModel.js";
 import { comparePassword, hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
+import ROLES from "../constants/roles.js";
 
 export default class AuthService {
   static async login(username, password) {
@@ -47,7 +48,7 @@ export default class AuthService {
     }
 
     const existing = await userModel.findById(userId);
-    if (!existing || existing.role === "admin") {
+    if (!existing || existing.role === ROLES.ADMIN) {
       const err = new Error("User tidak ditemukan");
       err.status = 400;
       throw err;

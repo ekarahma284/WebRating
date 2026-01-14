@@ -1,6 +1,7 @@
 // src/controllers/AccountRequestController.js
 import AccountRequestService from "../services/AccountRequestService.js";
 import FileService from "../services/FileService.js";
+import ROLES from "../constants/roles.js";
 
 export default class AccountRequestController {
   
@@ -16,7 +17,7 @@ export default class AccountRequestController {
       // req.files = { upload_cv: [...], upload_surat_kuasa: [...] }
       // ============================================
 
-      if (payload.role === "reviewer") {
+      if (payload.role === ROLES.REVIEWER) {
         if (req.files?.upload_cv?.[0]) {
           const file = req.files.upload_cv[0];
 
@@ -30,7 +31,7 @@ export default class AccountRequestController {
         }
       }
 
-      if (payload.role === "pengelola") {
+      if (payload.role === ROLES.PENGELOLA) {
         if (req.files?.upload_surat_kuasa?.[0]) {
           const file = req.files.upload_surat_kuasa[0];
 

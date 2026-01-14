@@ -3,6 +3,7 @@ import AccountRequestModel from "../models/AccountRequestModel.js";
 import pool from "../config/db.js";
 import UserService from "./UserService.js";
 import SchoolsService from "./SchoolService.js";
+import ROLES, { REQUESTABLE_ROLES } from "../constants/roles.js";
 
 export default class AccountRequestService {
 
@@ -11,14 +12,14 @@ export default class AccountRequestService {
   // ============================================
   static async create(payload) {
     // Validate role
-    if (!payload.role || !["reviewer", "pengelola"].includes(payload.role)) {
+    if (!payload.role || !REQUESTABLE_ROLES.includes(payload.role)) {
       const e = new Error("Invalid role");
       e.status = 400;
       throw e;
     }
 
     // Reviewer validation
-    if (payload.role === "reviewer") {
+    if (payload.role === ROLES.REVIEWER) {
       if (!payload.nama_lengkap || !payload.upload_cv) {
         const e = new Error("Nama lengkap & upload_cv required for reviewer");
         e.status = 400;
@@ -27,7 +28,7 @@ export default class AccountRequestService {
     }
 
     // Pengelola validation
-    if (payload.role === "pengelola") {
+    if (payload.role === ROLES.PENGELOLA) {
       if (!payload.nama_lengkap || !payload.npsn || !payload.upload_surat_kuasa || !payload.id_school) {
         const e = new Error("Nama lengkap, NPSN & upload_surat_kuasa required for pengelola");
         e.status = 400;
@@ -68,7 +69,7 @@ export default class AccountRequestService {
       // =============================
       let username = null;
 
-      if (reqRow.role === "pengelola" && reqRow.npsn) {
+      if (reqRow.role === ROLES.PENGELOLA && reqRow.npsn) {
         username = reqRow.npsn; // username = NPSN
       } else if (reqRow.email) {
         username = reqRow.email.split("@")[0]; // ambil depan email
@@ -83,7 +84,7 @@ export default class AccountRequestService {
       // =============================
       // CASE: PENGELOLA
       // =============================
-      if (reqRow.role === "pengelola") {
+      if (reqRow.role === ROLES.PENGELOLA) {
 
         rawPassword = "pengelola123";
 
@@ -110,14 +111,14 @@ export default class AccountRequestService {
       // =============================
       // CASE: REVIEWER (BARU DITAMBAHKAN)
       // =============================
-      if (reqRow.role === "reviewer") {
+      if (reqRow.role === ROLES.REVIEWER) {
 
         rawPassword = "reviewer123";
 
         const createdUser = await UserService.createUser({
           username,
           password: rawPassword,
-          role: "reviewer",
+          role: ROLES.REVIEWER,
           must_change_password: true,
           account_req_id: reqRow.id,
         }, client);
@@ -159,7 +160,7 @@ export default class AccountRequestService {
       // =============================
       let username = null;
 
-      if (reqRow.role === "pengelola" && reqRow.npsn) {
+      if (reqRow.role === ROLES.PENGELOLA && reqRow.npsn) {
         username = reqRow.npsn; // username = NPSN
       } else if (reqRow.email) {
         username = reqRow.email.split("@")[0]; // ambil bagian depan email

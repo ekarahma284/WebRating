@@ -1,6 +1,7 @@
 import UserModel from "../models/userModel.js";
 import { hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
+import ROLES, { ALL_ROLES } from "../constants/roles.js";
 
 export default class UserService {
   static async getAllUsers() {
@@ -18,7 +19,7 @@ export default class UserService {
       role: {
         required: true,
         type: "string",
-        enum: ["admin", "reviewer", "pengelola", "user"],
+        enum: ALL_ROLES,
       },
       must_change_password: { type: "boolean" },
       account_req_id: { type: "string" },
@@ -41,7 +42,7 @@ export default class UserService {
       is_active: true,
     };
 
-    if (data.role === "admin") {
+    if (data.role === ROLES.ADMIN) {
       payload.account_req_id = null;
     } else {
       // NON-ADMIN: WAJIB PUNYA account_req_id
@@ -64,7 +65,7 @@ export default class UserService {
       role: {
         required: true,
         type: "string",
-        enum: ["admin", "reviewer", "pengelola", "user"],
+        enum: ALL_ROLES,
       },
       is_active: { type: "boolean" },
     });

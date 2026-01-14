@@ -1,7 +1,7 @@
 import { Router } from "express";
 import AccountRequestController from "../../controllers/AccountRequestController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
-import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
+import { roleMiddleware, ROLES } from "../../middlewares/roleMiddleware.js";
 import upload, { handleUploadErrors } from "../../middlewares/uploadMiddleware.js";
 
 const router = Router();
@@ -19,15 +19,15 @@ router.post(
 );
 
 // list (admin only)
-router.get("/", authMiddleware.verify, roleMiddleware("admin"), AccountRequestController.list);
+router.get("/", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRequestController.list);
 
 // detail
-router.get("/:id", authMiddleware.verify, roleMiddleware("admin"), AccountRequestController.getById);
+router.get("/:id", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRequestController.getById);
 
 // accept
-router.post("/:id/accept", authMiddleware.verify, roleMiddleware("admin"), AccountRequestController.accept);
+router.post("/:id/accept", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRequestController.accept);
 
 // reject
-router.post("/:id/reject", authMiddleware.verify, roleMiddleware("admin"), AccountRequestController.reject);
+router.post("/:id/reject", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRequestController.reject);
 
 export default router;

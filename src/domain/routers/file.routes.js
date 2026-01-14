@@ -1,7 +1,7 @@
 import express from "express";
 import FileController from "../../controllers/FileController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
-import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
+import { roleMiddleware, ROLES } from "../../middlewares/roleMiddleware.js";
 import upload from "../../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
@@ -26,7 +26,7 @@ const uploadHandler = (req, res, next) => {
 router.post(
   "/",
   authMiddleware.verify,
-  roleMiddleware("admin","reviewer", "pengelola"), // ➜ jika ingin dua role sekaligus
+  roleMiddleware(ROLES.ADMIN, ROLES.REVIEWER, ROLES.PENGELOLA),
   uploadHandler,
   FileController.createFile
 );
@@ -46,7 +46,7 @@ router.get(
 router.delete(
   "/:id",
   authMiddleware.verify,
-  roleMiddleware("admin"),
+  roleMiddleware(ROLES.ADMIN),
   FileController.deleteFile
 );
 

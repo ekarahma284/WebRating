@@ -1,4 +1,5 @@
 import db from "../config/db.js";
+import ROLES from "../constants/roles.js";
 
 export default class SummaryModel {
 
@@ -12,9 +13,9 @@ export default class SummaryModel {
                 SELECT
                     (SELECT COUNT(*) FROM schools) AS total_schools,
                     (SELECT COUNT(*) FROM account_requests) AS total_account_requests,
-                    (SELECT COUNT(*) FROM users WHERE role = 'reviewer') AS total_reviewers
+                    (SELECT COUNT(*) FROM users WHERE role = $1) AS total_reviewers
             `;
-            const result = await db.query(query);
+            const result = await db.query(query, [ROLES.REVIEWER]);
             return result.rows[0];
         } catch (error) {
             console.error("DB ERROR [SummaryModel.getStats]:", error.message);
