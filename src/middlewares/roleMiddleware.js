@@ -2,9 +2,11 @@ import ROLES, { ALL_ROLES } from "../constants/roles.js";
 
 export const roleMiddleware = (...allowedRoles) => {
   // Validate that all provided roles are valid
-  const invalidRoles = allowedRoles.filter(role => !ALL_ROLES.includes(role));
+  const invalidRoles = allowedRoles.filter((role) => !ALL_ROLES.includes(role));
   if (invalidRoles.length > 0) {
-    console.error(`Invalid roles provided to roleMiddleware: ${invalidRoles.join(", ")}`);
+    console.error(
+      `Invalid roles provided to roleMiddleware: ${invalidRoles.join(", ")}`
+    );
   }
 
   return (req, res, next) => {

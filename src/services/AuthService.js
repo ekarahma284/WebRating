@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import TokenBlacklistModel from "../models/TokenBlacklistModel.js";
+import SchoolModel from "../models/SchoolModel.js";
+import AccountRequestModel from "../models/AccountRequestModel.js";
 import { comparePassword, hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
 import ROLES from "../constants/roles.js";
@@ -31,12 +33,25 @@ export default class AuthService {
       expiresIn: "1h",
     });
 
+    // Build user response object
+    const userResponse = {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    };
+
+    // If user is pengelola, include their school info
+    if (user.role === ROLES.PENGELOLA) {
+      const school = await SchoolModel.findByPengelolaId(user.id);
+      if (school) {
+        userResponse.school_id = school.id;
+        userResponse.school_nama = school.nama;
+      }
+    }
+
     return {
       token,
-      user: {
-        username: user.username,
-        role: user.role,
-      },
+      user: userResponse,
     };
   }
 

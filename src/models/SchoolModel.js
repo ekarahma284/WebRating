@@ -184,4 +184,18 @@ export default class SchoolModel {
         }
     }
 
+    // ======================================================
+    // FIND SCHOOL BY PENGELOLA USER ID
+    // ======================================================
+    static async findByPengelolaId(userId) {
+        try {
+            const query = `SELECT id, nama, npsn FROM ${this.table} WHERE claimed_by = $1`;
+            const result = await db.query(query, [userId]);
+            return result.rows[0];
+        } catch (error) {
+            console.error("DB ERROR [SchoolModel.findByPengelolaId]:", error.message);
+            throw error;
+        }
+    }
+
 }

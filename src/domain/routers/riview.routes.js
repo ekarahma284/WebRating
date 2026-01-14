@@ -29,7 +29,7 @@ router.get(
 router.get(
   "/school/:school_id",
   authMiddleware.verify,
-  roleMiddleware(ROLES.REVIEWER),
+  roleMiddleware(ROLES.REVIEWER, ROLES.PENGELOLA),
   ReviewController.getReviewDetailBySchoolId
 );
 
