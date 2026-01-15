@@ -13,4 +13,7 @@ router.post("/reset-password", authMiddleware.verify, AuthController.resetPasswo
 // Lupa password (identifier username)
 router.post("/forgot-password", AuthController.forgotPassword);
 
+// Logout (invalidate token)
+router.post("/logout", AuthController.logout);
+
 export default router;

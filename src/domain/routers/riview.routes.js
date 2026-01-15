@@ -1,7 +1,7 @@
 import express from "express";
 import ReviewController from "../../controllers/RiviewController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
-import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
+import { roleMiddleware, ROLES } from "../../middlewares/roleMiddleware.js";
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ const router = express.Router();
 router.post(
   "/",
   authMiddleware.verify,
-  roleMiddleware("reviewer"),
+  roleMiddleware(ROLES.REVIEWER),
   ReviewController.createReview
 );
 
@@ -21,7 +21,7 @@ router.post(
 router.get(
   "/school",
   authMiddleware.verify,
-  roleMiddleware("reviewer"),
+  roleMiddleware(ROLES.REVIEWER),
   ReviewController.getReviewBySchool
 );
 
@@ -29,16 +29,12 @@ router.get(
 router.get(
   "/school/:school_id",
   authMiddleware.verify,
-  roleMiddleware("reviewer"),
+  roleMiddleware(ROLES.REVIEWER, ROLES.PENGELOLA),
   ReviewController.getReviewDetailBySchoolId
 );
 
 // Ambil detail satu review
-router.get(
-  "/:id",
-  authMiddleware.verify,
-  ReviewController.getOneReview
-);
+router.get("/:id", authMiddleware.verify, ReviewController.getOneReview);
 
 // ======================================================
 // REVIEW ITEMS
@@ -47,16 +43,16 @@ router.get(
 router.post(
   "/:review_id/items",
   authMiddleware.verify,
-  roleMiddleware("reviewer"),
+  roleMiddleware(ROLES.REVIEWER),
   ReviewController.addReviewItem
 );
 
 router.put(
   "/:review_id/items/:reviewItem_id",
   authMiddleware.verify,
-  roleMiddleware("reviewer"),
+  roleMiddleware(ROLES.REVIEWER),
   ReviewController.editReviewItem
-)
+);
 
 // ======================================================
 // RESPONSES (CHAT ANTARA REVIEWER & PENGELOLA SEKOLAH)

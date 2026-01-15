@@ -1,9 +1,9 @@
 import UserModel from "../models/userModel.js";
 import { hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
+import ROLES, { ALL_ROLES } from "../constants/roles.js";
 
 export default class UserService {
-
   static async getAllUsers() {
     return await UserModel.findAll();
   }
@@ -16,9 +16,13 @@ export default class UserService {
     const validation = validate(data, {
       username: { required: true, type: "string", min: 3 },
       password: { required: true, type: "string", min: 6 },
-      role: { required: true, type: "string", enum: ["admin", "reviewer", "pengelola", "user"] },
+      role: {
+        required: true,
+        type: "string",
+        enum: ALL_ROLES,
+      },
       must_change_password: { type: "boolean" },
-      account_req_id: { type: "string" }
+      account_req_id: { type: "string" },
     });
 
     if (validation) {
@@ -35,17 +39,18 @@ export default class UserService {
       role: data.role,
       password_hash: await hashPassword(data.password),
       must_change_password: data.must_change_password ?? true,
-      is_active: true
+      is_active: true,
     };
 
-    if (data.role === "admin") {
+    if (data.role === ROLES.ADMIN) {
       payload.account_req_id = null;
     } else {
       // NON-ADMIN: WAJIB PUNYA account_req_id
       if (!data.account_req_id) {
         throw {
           status: 400,
-          errors: "Silahakan sertakan account_req_id untuk user dengan role selain admin"
+          errors:
+            "Silahakan sertakan account_req_id untuk user dengan role selain admin",
         };
       }
       payload.account_req_id = data.account_req_id;
@@ -57,8 +62,12 @@ export default class UserService {
   static async updateUser(id, data) {
     const validation = validate(data, {
       username: { required: true, type: "string", min: 3 },
-      role: { required: true, type: "string", enum: ["admin", "reviewer", "pengelola", "user"] },
-      is_active: { type: "boolean" }
+      role: {
+        required: true,
+        type: "string",
+        enum: ALL_ROLES,
+      },
+      is_active: { type: "boolean" },
     });
 
     if (validation) {
@@ -83,9 +92,12 @@ export default class UserService {
   }
 
   static async setActive(id, active = true) {
-    const validation = validate({ id, active }, {
-      active: { type: "boolean" }
-    });
+    const validation = validate(
+      { id, active },
+      {
+        active: { type: "boolean" },
+      }
+    );
 
     if (validation) {
       throw { status: 400, errors: validation };
@@ -97,16 +109,22 @@ export default class UserService {
     }
 
     if (user.is_active === active) {
-      throw { status: 400, errors: `User is already ${active ? "active" : "inactive"}!` };
+      throw {
+        status: 400,
+        errors: `User is already ${active ? "active" : "inactive"}!`,
+      };
     }
 
     return await UserModel.setActiveStatus(id, active);
   }
 
   static async changePassword(id, newPassword) {
-    const validation = validate({ newPassword }, {
-      newPassword: { required: true, type: "string", min: 6 }
-    });
+    const validation = validate(
+      { newPassword },
+      {
+        newPassword: { required: true, type: "string", min: 6 },
+      }
+    );
 
     if (validation) {
       throw { status: 400, errors: validation };
@@ -132,7 +150,7 @@ export default class UserService {
       if (!newPassword) {
         return res.status(400).json({
           success: false,
-          message: "Password baru wajib diisi"
+          message: "Password baru wajib diisi",
         });
       }
 
@@ -144,16 +162,14 @@ export default class UserService {
 
       return res.json({
         success: true,
-        message: "Password berhasil direset"
+        message: "Password berhasil direset",
       });
-
     } catch (err) {
       console.error(err);
       return res.status(500).json({
         success: false,
-        message: err.message || "Terjadi kesalahan"
+        message: err.message || "Terjadi kesalahan",
       });
     }
   }
-
 }

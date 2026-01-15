@@ -73,4 +73,15 @@ export default class AccountRequestModel {
       throw error;
     }
   }
+
+  static async findById(id) {
+    try {
+      const query = `SELECT * FROM account_requests WHERE id = $1`;
+      const result = await db.query(query, [id]);
+      return result.rows[0];
+    } catch (error) {
+      console.error("DB ERROR [AccountRequestModel.findById]:", error.message);
+      throw error;
+    }
+  }
 }

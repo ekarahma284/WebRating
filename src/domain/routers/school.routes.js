@@ -1,7 +1,7 @@
 import express from "express";
 import SchoolController from "../../controllers/SchoolController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
-import { roleMiddleware } from "../../middlewares/roleMiddleware.js";
+import { roleMiddleware, ROLES } from "../../middlewares/roleMiddleware.js";
 
 const router = express.Router();
 
@@ -14,14 +14,14 @@ router.get(
 router.post(
     "/:id/claim",
     authMiddleware.verify,
-    roleMiddleware("pengelola"),
+    roleMiddleware(ROLES.PENGELOLA),
     SchoolController.claimSchool
 );
 
 router.put(
   "/:id/update-manager",
   authMiddleware.verify,
-  roleMiddleware("pengelola"),
+  roleMiddleware(ROLES.PENGELOLA),
   SchoolController.updateSchoolByManager
 );
 
@@ -29,7 +29,7 @@ router.put(
 // router.get(
 //   "/:id",
 //   authMiddleware.verify,
-//   roleMiddleware("admin"),
+//   roleMiddleware(ROLES.ADMIN),
 //   SchoolController.getSchoolById
 // );
 
@@ -42,7 +42,7 @@ router.get(
 router.post(
   "/",
   authMiddleware.verify,
-  roleMiddleware("admin"),
+  roleMiddleware(ROLES.ADMIN),
   SchoolController.createSchool
 );
 
@@ -50,7 +50,7 @@ router.post(
 router.put(
   "/:id",
   authMiddleware.verify,
-  roleMiddleware("admin"),
+  roleMiddleware(ROLES.ADMIN),
   SchoolController.updateSchool
 );
 
@@ -58,7 +58,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware.verify,
-  roleMiddleware("admin"),
+  roleMiddleware(ROLES.ADMIN),
   SchoolController.deleteSchool
 );
 

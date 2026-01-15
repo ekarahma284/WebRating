@@ -5,6 +5,20 @@ export default class IndicatorModel {
     static table = "indicators";
 
     // ======================================================
+    // AMBIL INDIKATOR BERDASARKAN ID
+    // ======================================================
+    static async findById(id) {
+        try {
+            const query = `SELECT * FROM ${this.table} WHERE id=$1`;
+            const result = await db.query(query, [id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error("DB ERROR [IndicatorModel.findById]:", error.message);
+            throw error;
+        }
+    }
+
+    // ======================================================
     // AMBIL SEMUA INDIKATOR BERDASARKAN KATEGORI
     // ======================================================
     static async findByCategory(categoryId) {
@@ -53,6 +67,20 @@ export default class IndicatorModel {
             return result.rows[0];
         } catch (error) {
             console.error("DB ERROR [IndicatorModel.update]:", error.message);
+            throw error;
+        }
+    }
+
+    // ======================================================
+    // CHECK IF INDICATOR IS USED IN REVIEWS
+    // ======================================================
+    static async isUsedInReviews(id) {
+        try {
+            const query = `SELECT COUNT(*) FROM review_items WHERE indicator_id = $1`;
+            const result = await db.query(query, [id]);
+            return parseInt(result.rows[0].count) > 0;
+        } catch (error) {
+            console.error("DB ERROR [IndicatorModel.isUsedInReviews]:", error.message);
             throw error;
         }
     }

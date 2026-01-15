@@ -2,11 +2,17 @@ import cors from "cors";
 import express from "express";
 import dsn from "./src/Infra/postgres.js";
 import router from "./src/domain/router.js";
+import TokenBlacklistModel from "./src/models/TokenBlacklistModel.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT_APP
+
+// Initialize token blacklist table
+TokenBlacklistModel.ensureTable().catch(err => {
+  console.error("Failed to create token_blacklist table:", err.message);
+});
 
 // Middleware
 app.use(cors());
