@@ -1,5 +1,6 @@
 // src/models/AccountRequestModel.js
 import db from "../config/db.js";
+import pool from "../config/db.js";
 
 export default class AccountRequestModel {
 
@@ -38,7 +39,10 @@ export default class AccountRequestModel {
   }
 
   static async listAll() {
-    return await dsn`SELECT * FROM account_requests ORDER BY created_at DESC`;
+    const result = await pool.query(
+      "SELECT * FROM account_requests ORDER BY created_at DESC"
+    );
+    return result.rows;
   }
 
   static async getById(id, client) {
