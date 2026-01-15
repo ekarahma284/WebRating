@@ -1,7 +1,7 @@
+import ROLES, { ALL_ROLES } from "../constants/roles.js";
 import UserModel from "../models/userModel.js";
 import { hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
-import ROLES, { ALL_ROLES } from "../constants/roles.js";
 
 export default class UserService {
   static async getAllUsers() {
