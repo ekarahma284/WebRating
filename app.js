@@ -1,16 +1,16 @@
 import cors from "cors";
+import dotenv from "dotenv";
 import express from "express";
 import dsn from "./src/Infra/postgres.js";
 import router from "./src/domain/router.js";
 import TokenBlacklistModel from "./src/models/TokenBlacklistModel.js";
-import dotenv from "dotenv";
 
 dotenv.config();
 const app = express();
-const PORT = process.env.PORT_APP
+const PORT = process.env.PORT_APP;
 
 // Initialize token blacklist table
-TokenBlacklistModel.ensureTable().catch(err => {
+TokenBlacklistModel.ensureTable().catch((err) => {
   console.error("Failed to create token_blacklist table:", err.message);
 });
 
@@ -50,7 +50,7 @@ app.use((err, req, res, next) => {
 
 // Run server
 app.listen(PORT, () => {
-  console.log(`🚀 Server berjalan di port ${PORT}`);
+  console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
 });
 
 // Graceful shutdown

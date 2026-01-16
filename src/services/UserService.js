@@ -1,8 +1,12 @@
+import ROLES, { ALL_ROLES } from "../constants/roles.js";
 import UserModel from "../models/userModel.js";
 import { hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
+<<<<<<< HEAD
 import ROLES, { ALL_ROLES } from "../constants/roles.js";
 import pool from "../Infra/postgres.js"; // ✅ FIX UTAMA
+=======
+>>>>>>> 2f6b9d345d5a14ad1a1138889e877271c1295b67
 
 export default class UserService {
   static async getAllUsers() {

@@ -51,7 +51,7 @@ export default class AccountRequestService {
   // GET REQUEST BY ID
   // ============================================
   static async getById(id) {
-    return await AccountRequestModel.getById(id);
+    return await AccountRequestModel.findById(id);
   }
   // ============================================
   // ACCEPT REQUEST (admin)

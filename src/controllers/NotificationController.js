@@ -2,7 +2,6 @@ import { broadcastNewNotification } from "../domain/routers/sse.js";
 import NotificationService from "../services/NotificationService.js";
 
 export default class NotificationController {
-
   // ================================
   // GET MY NOTIFICATIONS
   // ================================
@@ -10,14 +9,15 @@ export default class NotificationController {
     try {
       const userId = req.user.id;
 
-      const notifications = await NotificationService.getMyNotifications(userId);
+      const notifications = await NotificationService.getMyNotifications(
+        userId
+      );
 
       res.json({
         success: true,
         message: "Notifications retrieved successfully",
         data: notifications,
       });
-
     } catch (err) {
       NotificationController.handleError(res, err);
     }
@@ -50,7 +50,6 @@ export default class NotificationController {
         message: "Notification created successfully",
         data: notif,
       });
-
     } catch (err) {
       NotificationController.handleError(res, err);
     }
@@ -76,7 +75,6 @@ export default class NotificationController {
         success: true,
         message: "Notification marked as read successfully",
       });
-
     } catch (err) {
       NotificationController.handleError(res, err);
     }
