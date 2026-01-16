@@ -2,6 +2,7 @@ import UserModel from "../models/userModel.js";
 import { hashPassword } from "../utils/password.js";
 import { validate } from "../utils/validation.js";
 import ROLES, { ALL_ROLES } from "../constants/roles.js";
+import pool from "../Infra/postgres.js"; // ✅ FIX UTAMA
 
 export default class UserService {
   static async getAllUsers() {
@@ -45,12 +46,11 @@ export default class UserService {
     if (data.role === ROLES.ADMIN) {
       payload.account_req_id = null;
     } else {
-      // NON-ADMIN: WAJIB PUNYA account_req_id
       if (!data.account_req_id) {
         throw {
           status: 400,
           errors:
-            "Silahakan sertakan account_req_id untuk user dengan role selain admin",
+            "Silahkan sertakan account_req_id untuk user dengan role selain admin",
         };
       }
       payload.account_req_id = data.account_req_id;
@@ -93,10 +93,8 @@ export default class UserService {
 
   static async setActive(id, active = true) {
     const validation = validate(
-      { id, active },
-      {
-        active: { type: "boolean" },
-      }
+      { active },
+      { active: { type: "boolean" } }
     );
 
     if (validation) {
@@ -121,9 +119,7 @@ export default class UserService {
   static async changePassword(id, newPassword) {
     const validation = validate(
       { newPassword },
-      {
-        newPassword: { required: true, type: "string", min: 6 },
-      }
+      { newPassword: { required: true, type: "string", min: 6 } }
     );
 
     if (validation) {
@@ -142,34 +138,11 @@ export default class UserService {
   static async findByUsername(username) {
     return await UserModel.findByUsername(username);
   }
-  static async resetPassword(req, res) {
-    try {
-      const userId = req.user.id; // dari token
-      const { newPassword } = req.body;
 
-      if (!newPassword) {
-        return res.status(400).json({
-          success: false,
-          message: "Password baru wajib diisi",
-        });
-      }
-
-      // hash password baru
-      const hashed = await bcrypt.hash(newPassword, 10);
-
-      // update di database
-      await UserService.changePassword(userId, newPassword);
-
-      return res.json({
-        success: true,
-        message: "Password berhasil direset",
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({
-        success: false,
-        message: err.message || "Terjadi kesalahan",
-      });
+  static async getManagerProfile(userId) {
+    if (!userId) {
+      throw { status: 400, errors: "userId is required" };
     }
+    return await UserModel.getManagerProfile(userId);
   }
 }

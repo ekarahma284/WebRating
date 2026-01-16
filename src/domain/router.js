@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+
 import authRoutes from "./routers/auth.routes.js";
 import userRoutes from "./routers/user.routes.js";
 import accountRequestRoutes from "./routers/accountRequest.routes.js";
@@ -10,7 +11,8 @@ import fileRoutes from "./routers/file.routes.js";
 import notificationRoutes from "./routers/notification.routes.js";
 import uploadRoutes from "./routers/upload.routes.js";
 import summaryRoutes from "./routers/summary.routes.js";
-
+import adminDashboardRoutes from "./routers/dashboard.routes.js";
+import managerRoutes from "./routers/manager.routes.js";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -24,5 +26,7 @@ router.use("/notifications", notificationRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/summary", summaryRoutes);
 router.use("/sse", (await import("./routers/sse.js")).default);
+router.use("/admin", adminDashboardRoutes);
+router.use("/manager", managerRoutes);
 
 export default router;

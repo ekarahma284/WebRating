@@ -221,7 +221,43 @@ export default class RiviewService {
 
         return response;
     }
+    // ============================================================
+    // DASHBOARD REVIEWER
+    // ============================================================
 
+    static async getReviewStats(reviewer_id) {
+        return await ReviewModel.getReviewStats(reviewer_id);
+    }
+
+    static async getSchoolScores(reviewer_id) {
+        return await ReviewModel.getSchoolScores(reviewer_id);
+    }
+
+    static async getMyReviews(reviewer_id) {
+        return await ReviewModel.getMyReviews(reviewer_id);
+    }
+
+    static async getReviewerProfile(user_id) {
+        return await ReviewModel.getReviewerProfile(user_id);
+    }
+    static async getSchoolRating(schoolId) {
+        const query = `
+        SELECT
+            ROUND(AVG(ri.skor), 2) AS avg_rating,
+            COUNT(DISTINCT r.id) AS total_reviews
+        FROM reviews r
+        JOIN review_items ri ON ri.review_id = r.id
+        WHERE r.school_id = $1
+    `;
+
+        const { rows } = await pool.query(query, [schoolId]);
+
+        return {
+            avgRating: Number(rows[0]?.avg_rating ?? 0),
+            totalReviews: Number(rows[0]?.total_reviews ?? 0),
+        };
+    }
+    
     static async getResponses(review_id) {
         return await ReviewResponseModel.findByReviewItem(review_id);
     }

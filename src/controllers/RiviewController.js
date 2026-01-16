@@ -234,6 +234,73 @@ export default class ReviewController {
             });
         }
     }
+    // ======================================================
+    // DASHBOARD REVIEWER
+    // ======================================================
+
+    // 1. Jumlah sekolah sudah & belum direview
+    static async getReviewStats(req, res) {
+        try {
+            const reviewer_id = req.user.id;
+
+            const result = await RiviewService.getReviewStats(reviewer_id);
+
+            return res.json({
+                success: true,
+                data: result
+            });
+        } catch (err) {
+            return ReviewController.handleError(res, err);
+        }
+    }
+
+    // 2. Jumlah point setiap sekolah
+    static async getSchoolScores(req, res) {
+        try {
+            const reviewer_id = req.user.id;
+
+            const result = await RiviewService.getSchoolScores(reviewer_id);
+
+            return res.json({
+                success: true,
+                data: result
+            });
+        } catch (err) {
+            return ReviewController.handleError(res, err);
+        }
+    }
+
+    // 3. Daftar review saya
+    static async getMyReviews(req, res) {
+        try {
+            const reviewer_id = req.user.id;
+
+            const result = await RiviewService.getMyReviews(reviewer_id);
+
+            return res.json({
+                success: true,
+                data: result
+            });
+        } catch (err) {
+            return ReviewController.handleError(res, err);
+        }
+    }
+
+    // 4. Profil reviewer
+    static async getMyProfile(req, res) {
+        try {
+            const user_id = req.user.id;
+
+            const result = await RiviewService.getReviewerProfile(user_id);
+
+            return res.json({
+                success: true,
+                data: result
+            });
+        } catch (err) {
+            return ReviewController.handleError(res, err);
+        }
+    }
 
     // ======================================================
     // GLOBAL ERROR HANDLER (mirip AuthController)

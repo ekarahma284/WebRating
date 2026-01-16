@@ -146,4 +146,24 @@ export default class UserModel {
       throw error;
     }
   }
+
+  static async getManagerProfile(userId) {
+    const q = `
+        SELECT
+          u.id,
+          u.role,
+          u.username,
+          a.nama_lengkap,
+          a.email,
+          a.no_whatsapp,
+          a.npsn,
+          a.jabatan
+        FROM users u
+        JOIN account_requests a ON a.id = u.account_req_id
+        WHERE u.id = $1
+    `;
+
+    const { rows } = await db.query(q, [userId]);
+    return rows[0];
+  }
 }

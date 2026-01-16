@@ -17,7 +17,7 @@ export default class SchoolsService {
       throw { status: 404, errors: "Sekolah tidak ditemukan" };
     }
 
-    if(school.claimed_by) {
+    if (school.claimed_by) {
       throw { status: 400, errors: "Sekolah sudah diklaim" };
     }
 
@@ -26,6 +26,19 @@ export default class SchoolsService {
     return { success: true };
   }
 
+  static async updateByManager(userId, data) {
+    const { name, address, phone, description } = data;
+    const q = `
+    UPDATE schools
+    SET name=$1, address=$2, phone=$3, description=$4
+    WHERE manager_id=$5
+    RETURNING *
+  `;
+    const { rows } = await dsn.query(q, [
+      name, address, phone, description, userId
+    ]);
+    return rows[0];
+  }
 
   // ============================================
   // 📌 GET SCHOOL BY ID

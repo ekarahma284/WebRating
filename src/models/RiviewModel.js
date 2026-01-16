@@ -101,6 +101,95 @@ export default class ReviewModel {
             throw error;
         }
     }
+    // ======================================================
+    // DASHBOARD REVIEWER
+    // ======================================================
+
+    // jumlah sekolah sudah & belum direview
+    static async getReviewStats(reviewer_id) {
+        const query = `
+        SELECT
+            (SELECT COUNT(*) FROM schools) AS total_sekolah,
+            (SELECT COUNT(*) FROM reviews WHERE reviewer_id = $1) AS sudah_review
+    `;
+        const result = await db.query(query, [reviewer_id]);
+
+        const total = Number(result.rows[0].total_sekolah);
+        const sudah = Number(result.rows[0].sudah_review);
+
+        return {
+            total_sekolah: total,
+            sudah_review: sudah,
+            belum_review: total - sudah
+        };
+    }
+
+    // jumlah point setiap sekolah
+    static async getSchoolScores(reviewer_id) {
+        const query = `
+        SELECT
+            s.id,
+            s.nama AS nama_sekolah,
+            r.total_score
+        FROM reviews r
+        JOIN schools s ON s.id = r.school_id
+        WHERE r.reviewer_id = $1
+        ORDER BY s.nama ASC
+    `;
+        const result = await db.query(query, [reviewer_id]);
+        return result.rows;
+    }
+
+    // daftar review saya
+    static async getMyReviews(reviewer_id) {
+        try {
+            const query = `
+            SELECT
+                s.nama AS nama_sekolah,
+                r.total_score,
+                r.tanggal
+            FROM reviews r
+            JOIN schools s ON s.id = r.school_id
+            WHERE r.reviewer_id = $1
+            ORDER BY r.tanggal DESC
+        `;
+            const result = await db.query(query, [reviewer_id]);
+            return result.rows;
+        } catch (error) {
+            console.error("DB ERROR [getMyReviews]:", error.message);
+            throw error;
+        }
+    }
+
+
+    // profil reviewer
+    static async getReviewerProfile(user_id) {
+        try {
+            const query = `
+            SELECT
+                u.id,
+                u.username,
+                ar.role,
+                ar.nama_lengkap,
+                ar.email,
+                ar.no_whatsapp,
+                ar.pendidikan_terakhir,
+                ar.profesi,
+                ar.jabatan,
+                ar.created_at
+            FROM users u
+            LEFT JOIN account_requests ar ON u.account_req_id = ar.id
+            WHERE u.id = $1
+        `;
+            const result = await db.query(query, [user_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error("DB ERROR [ReviewModel.getReviewerProfile]:", error.message);
+            throw error;
+        }
+    }
+
+
 
     static async getReviewDetailBySchoolId(school_id) {
         try {

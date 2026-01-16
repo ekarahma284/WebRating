@@ -71,5 +71,37 @@ router.get(
   authMiddleware.verify,
   ReviewController.getResponses
 );
+// ======================================================
+// REVIEWER DASHBOARD
+// ======================================================
+
+router.get(
+  "/dashboard/stats",
+  authMiddleware.verify,
+  roleMiddleware(ROLES.REVIEWER),
+  ReviewController.getReviewStats
+);
+
+router.get(
+  "/dashboard/scores",
+  authMiddleware.verify,
+  roleMiddleware(ROLES.REVIEWER),
+  ReviewController.getSchoolScores
+);
+
+router.get(
+  "/dashboard/my-reviews",
+  authMiddleware.verify,
+  roleMiddleware(ROLES.REVIEWER),
+  ReviewController.getMyReviews
+);
+
+router.get(
+  "/dashboard/profile",
+  authMiddleware.verify,
+  roleMiddleware(ROLES.REVIEWER),
+  ReviewController.getMyProfile
+);
+
 
 export default router;
