@@ -28,6 +28,6 @@ router.get("/:id", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRe
 router.post("/:id/accept", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRequestController.accept);
 
 // reject
-router.post("/:id/reject", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRequestController.reject);
+router.delete("/:id/reject", authMiddleware.verify, roleMiddleware(ROLES.ADMIN), AccountRequestController.reject);
 
 export default router;

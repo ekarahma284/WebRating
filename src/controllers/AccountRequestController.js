@@ -114,7 +114,7 @@ export default class AccountRequestController {
   // ============================================
   static async reject(req, res) {
     try {
-      await AccountRequestService.rejectRequest(req.params.id, req.body.reason);
+      await AccountRequestService.rejectRequest(req.params.id);
 
       return res.json({
         success: true,

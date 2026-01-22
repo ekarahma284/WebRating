@@ -84,4 +84,20 @@ export default class AccountRequestModel {
       throw error;
     }
   }
+
+    static async rejectStatus(id, status) {
+    try {
+      const query = `
+      UPDATE account_requests
+      SET status = $1
+      WHERE id = $2
+      `;
+
+      await db.query(query, [status, id]);
+      return true;
+    } catch (error) {
+      console.error("DB ERROR [AccountRequestModel.updateStatus]:", error.message);
+      throw error;
+    }
+  }
 }

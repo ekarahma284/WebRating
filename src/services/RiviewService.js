@@ -229,8 +229,8 @@ export default class RiviewService {
         return await ReviewModel.getReviewStats(reviewer_id);
     }
 
-    static async getSchoolScores(reviewer_id) {
-        return await ReviewModel.getSchoolScores(reviewer_id);
+    static async getSchoolScores() {
+        return await ReviewModel.getSchoolScores();
     }
 
     static async getMyReviews(reviewer_id) {

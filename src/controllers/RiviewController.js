@@ -257,9 +257,7 @@ export default class ReviewController {
     // 2. Jumlah point setiap sekolah
     static async getSchoolScores(req, res) {
         try {
-            const reviewer_id = req.user.id;
-
-            const result = await RiviewService.getSchoolScores(reviewer_id);
+            const result = await RiviewService.getSchoolScores();
 
             return res.json({
                 success: true,

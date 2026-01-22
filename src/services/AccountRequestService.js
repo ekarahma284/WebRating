@@ -210,9 +210,8 @@ export default class AccountRequestService {
   // ============================================
   // REJECT REQUEST
   // ============================================
-  static async rejectRequest(id, reason = null) {
-    await AccountRequestModel.updateStatus(id, "rejected");
-    // if needed, you can store reject reason in another table
+  static async rejectRequest(id) {
+    await AccountRequestModel.rejectStatus(id, "rejected");
     return true;
   }
 }

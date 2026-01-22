@@ -125,7 +125,7 @@ export default class ReviewModel {
     }
 
     // jumlah point setiap sekolah
-    static async getSchoolScores(reviewer_id) {
+    static async getSchoolScores() {
         const query = `
         SELECT
             s.id,
@@ -133,10 +133,9 @@ export default class ReviewModel {
             r.total_score
         FROM reviews r
         JOIN schools s ON s.id = r.school_id
-        WHERE r.reviewer_id = $1
         ORDER BY s.nama ASC
     `;
-        const result = await db.query(query, [reviewer_id]);
+        const result = await db.query(query);
         return result.rows;
     }
 
