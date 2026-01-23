@@ -1,10 +1,9 @@
 // src/controllers/AccountRequestController.js
+import ROLES from "../constants/roles.js";
 import AccountRequestService from "../services/AccountRequestService.js";
 import FileService from "../services/FileService.js";
-import ROLES from "../constants/roles.js";
 
 export default class AccountRequestController {
-  
   // ============================================
   // CREATE REQUEST (Reviewer / Pengelola)
   // ============================================
@@ -24,7 +23,7 @@ export default class AccountRequestController {
           const saved = await FileService.createFile({
             kategori: "cv",
             file,
-            owner_id: null
+            owner_id: null,
           });
 
           payload.upload_cv = saved.path;
@@ -38,7 +37,7 @@ export default class AccountRequestController {
           const saved = await FileService.createFile({
             kategori: "surat_kuasa",
             file,
-            owner_id: null
+            owner_id: null,
           });
 
           payload.upload_surat_kuasa = saved.path;
@@ -50,14 +49,13 @@ export default class AccountRequestController {
       return res.status(201).json({
         success: true,
         message: "Account request created successfully",
-        data: result
+        data: result,
       });
-
     } catch (error) {
       console.error(error);
       return res.status(error.status || 500).json({
         success: false,
-        message: error.message || "Internal server error"
+        message: error.message || "Internal server error",
       });
     }
   }
@@ -80,7 +78,10 @@ export default class AccountRequestController {
   static async getById(req, res) {
     try {
       const row = await AccountRequestService.getById(req.params.id);
-      if (!row) return res.status(404).json({ success: false, message: "Request not found" });
+      if (!row)
+        return res
+          .status(404)
+          .json({ success: false, message: "Request not found" });
 
       return res.json({ success: true, data: row });
     } catch (error) {
@@ -98,13 +99,12 @@ export default class AccountRequestController {
       return res.json({
         success: true,
         message: "Request accepted successfully",
-        data: result
+        data: result,
       });
-
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message ?? error?.errors,
       });
     }
   }
@@ -118,13 +118,12 @@ export default class AccountRequestController {
 
       return res.json({
         success: true,
-        message: "Request rejected successfully"
+        message: "Request rejected successfully",
       });
-
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
