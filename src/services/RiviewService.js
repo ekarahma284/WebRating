@@ -257,9 +257,17 @@ export default class RiviewService {
             totalReviews: Number(rows[0]?.total_reviews ?? 0),
         };
     }
-    
+
+    static async getSchoolRankingTop3() {
+        return await ReviewModel.getSchoolRankingTop3();
+    }
+
     static async getResponses(review_id) {
         return await ReviewResponseModel.findByReviewItem(review_id);
+    }
+
+    static async getSchoolRankingByLevel(jenjang) {
+        return await ReviewModel.getAllReviewsBySchoolLevel(jenjang);
     }
 
 }

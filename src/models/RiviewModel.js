@@ -210,4 +210,53 @@ export default class ReviewModel {
             throw error;
         }
     }
+
+    static async getSchoolRankingTop3() {
+        try {
+            const q = `
+            SELECT *
+            FROM (
+            SELECT
+                RANK() OVER (ORDER BY AVG(r.total_score) DESC) AS ranking,
+                s.id AS school_id,
+                s.nama AS school_name,
+                ROUND(AVG(r.total_score), 2) AS score,
+                COUNT(r.id) AS total_reviews
+            FROM schools s
+            JOIN reviews r ON r.school_id = s.id
+            GROUP BY s.id, s.nama
+            ) ranked
+            WHERE ranking <= 3
+            ORDER BY ranking;`;
+            const result = await db.query(q);
+            return result.rows;
+        } catch (error) {
+            console.error("DB ERROR [ReviewModel.getSchoolRanking]:", error.message);
+            throw error;
+        }
+    }
+
+    static async getAllReviewsBySchoolLevel(jenjang) {
+        try {
+            const q = `
+            SELECT
+                RANK() OVER (ORDER BY AVG(r.total_score) DESC) AS ranking,
+                s.id AS school_id,
+                s.nama AS school_name,
+                ROUND(AVG(r.total_score), 2) AS score,
+                COUNT(r.id) AS total_reviews
+            FROM schools s
+            JOIN reviews r ON r.school_id = s.id
+            WHERE ($1::text IS NULL OR s.jenjang = $1)
+            GROUP BY s.id, s.nama
+    `;
+
+            const result = await db.query(q, [jenjang ?? null]);
+            return result.rows;
+        } catch (error) {
+            console.error("DB ERROR [ReviewModel.getAllReviewsBySchoolLevel]:", error.message);
+            throw error;
+        }
+
+    }
 }

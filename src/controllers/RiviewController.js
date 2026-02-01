@@ -254,6 +254,39 @@ export default class ReviewController {
         }
     }
 
+    static async getSchoolRankingTop3(req, res) {
+        try {
+            const data = await RiviewService.getSchoolRankingTop3();
+            res.json({
+                success: true,
+                data,
+            });
+        } catch (err) {
+            res.status(500).json({
+                success: false,
+                message: "Failed to get school ranking",
+            });
+        }
+    }
+
+    static async getSchoolRankingByLevel(req, res) {
+        try {
+            const { jenjang } = req.query;
+
+            const data = await RiviewService.getSchoolRankingByLevel(jenjang);
+
+            res.json({
+                success: true,
+                data,
+            });
+        } catch (err) {
+            console.error("GET REVIEWS ERROR:", err);
+            res.status(500).json({
+                success: false,
+                message: "Failed to get school reviews",
+            });
+        }
+    }
     // 2. Jumlah point setiap sekolah
     static async getSchoolScores(req, res) {
         try {

@@ -74,6 +74,15 @@ router.get(
 // ======================================================
 // REVIEWER DASHBOARD
 // ======================================================
+router.get(
+  "/ranking/schools",
+  ReviewController.getSchoolRankingTop3
+);
+
+router.get(
+  "/ranking/schools/level",
+  ReviewController.getSchoolRankingByLevel
+)
 
 router.get(
   "/dashboard/stats",
