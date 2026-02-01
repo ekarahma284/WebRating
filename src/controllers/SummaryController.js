@@ -13,7 +13,7 @@ export default class SummaryController {
                 });
             }
 
-            const summary = await SummaryService.getSummary(limit);
+            const summary = await SummaryService.getSummary(req.user, limit);
 
             res.json({
                 success: true,
