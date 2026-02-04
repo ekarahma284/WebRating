@@ -105,13 +105,13 @@ export default class SummaryModel {
                 SELECT
                     r.id,
                     r.total_score,
-                    r.created_at,
+                    r.tanggal,
                     u.username AS reviewer_name,
                     (SELECT COUNT(*) FROM review_items WHERE review_id = r.id) AS items_count
                 FROM reviews r
                 JOIN users u ON r.reviewer_id = u.id
                 WHERE r.school_id = $1
-                ORDER BY r.created_at DESC
+                ORDER BY r.tanggal DESC
             `;
             const result = await db.query(query, [schoolId]);
             return result.rows;
