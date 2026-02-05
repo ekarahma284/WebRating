@@ -2,6 +2,7 @@ import express from "express";
 import SchoolController from "../../controllers/SchoolController.js";
 import authMiddleware from "../../middlewares/authMiddleware.js";
 import { roleMiddleware, ROLES } from "../../middlewares/roleMiddleware.js";
+import upload from "../../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.put(
   "/:id/update-manager",
   authMiddleware.verify,
   roleMiddleware(ROLES.PENGELOLA),
+  upload.single("foto"),
   SchoolController.updateSchoolByManager
 );
 
@@ -43,6 +45,7 @@ router.post(
   "/",
   authMiddleware.verify,
   roleMiddleware(ROLES.ADMIN),
+  upload.single("foto"),
   SchoolController.createSchool
 );
 

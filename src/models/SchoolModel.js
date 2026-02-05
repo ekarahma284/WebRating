@@ -40,13 +40,14 @@ export default class SchoolModel {
         try {
             const query = `
                 INSERT INTO ${this.table}
-                (nama, npsn, is_claimed)
-                VALUES ($1, $2, $3)
+                (nama, npsn, foto, is_claimed)
+                VALUES ($1, $2, $3, $4)
                 RETURNING *;
             `;
             const values = [
                 data.nama,
                 data.npsn ?? null,
+                data.foto ?? null,
                 false
             ];
 

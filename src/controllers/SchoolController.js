@@ -1,6 +1,7 @@
 import SchoolService from "../services/SchoolService.js";
 import SchoolModel from "../models/SchoolModel.js";
 import { success, error } from "../utils/response.js";
+import uploadRepository from "../models/Upload.js";
 
 
 export default class SchoolController {
@@ -48,7 +49,15 @@ export default class SchoolController {
 
   static async createSchool(req, res) {
     try {
-      const school = await SchoolService.createSchool(req.body);
+      const data = req.body;
+
+      // Handle file upload for foto
+      if (req.file) {
+        const uploaded = await uploadRepository.uploadFile(req.file);
+        data.foto = uploaded.url;
+      }
+
+      const school = await SchoolService.createSchool(data);
 
       res.status(201).json({
         success: true,
@@ -85,6 +94,12 @@ export default class SchoolController {
       // Pastikan pengelola yang klaim
       if (school.claimed_by !== userId)
         return error(res, "Anda tidak berhak mengubah sekolah ini", 403);
+
+      // Handle file upload for foto
+      if (req.file) {
+        const uploaded = await uploadRepository.uploadFile(req.file);
+        data.foto = uploaded.url;
+      }
 
       const updated = await SchoolModel.updateFull(schoolId, data);
       return success(res, "Sekolah berhasil diperbarui", updated);
