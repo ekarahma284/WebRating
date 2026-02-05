@@ -5,7 +5,9 @@ import IndicatorService from "./IndicatorService.js";
 import NotificationService from "./NotificationService.js";
 import SchoolsService from "./SchoolService.js";
 import ReviewResponseModel from "../models/ReviewResponseModel.js";
+import SchoolModel from "../models/SchoolModel.js";
 import { broadcastNewComment, broadcastNewNotification } from "../domain/routers/sse.js";
+import ROLES from "../constants/roles.js";
 
 export default class RiviewService {
 
@@ -268,6 +270,33 @@ export default class RiviewService {
 
     static async getSchoolRankingByLevel(jenjang) {
         return await ReviewModel.getAllReviewsBySchoolLevel(jenjang);
+    }
+
+    // Get reviews based on user role
+    static async getReviewsByUser(user) {
+        const { id, role } = user;
+
+        if (role === ROLES.ADMIN) {
+            return await ReviewModel.getAllReviews();
+        }
+
+        if (role === ROLES.REVIEWER) {
+            return await ReviewModel.getMyReviews(id);
+        }
+
+        if (role === ROLES.PENGELOLA) {
+            const school = await SchoolModel.findByPengelolaId(id);
+            if (!school) {
+                const err = new Error("Anda belum memiliki sekolah yang diklaim");
+                err.status = 404;
+                throw err;
+            }
+            return await ReviewModel.getReviewsBySchoolId(school.id);
+        }
+
+        const err = new Error("Role tidak valid");
+        err.status = 403;
+        throw err;
     }
 
 }

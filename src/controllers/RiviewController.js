@@ -5,6 +5,24 @@ import { success } from "../utils/response.js";
 export default class ReviewController {
 
     // ======================================================
+    // GET LIST REVIEWS (based on user role)
+    // ======================================================
+    static async getListReviews(req, res) {
+        try {
+            const user = req.user;
+            const result = await RiviewService.getReviewsByUser(user);
+
+            return res.json({
+                success: true,
+                message: "Reviews retrieved successfully",
+                data: result
+            });
+        } catch (err) {
+            return ReviewController.handleError(res, err);
+        }
+    }
+
+    // ======================================================
     // CREATE REVIEW + ITEMS
     // ======================================================
     static async createReview(req, res) {

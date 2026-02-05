@@ -144,6 +144,7 @@ export default class ReviewModel {
         try {
             const query = `
             SELECT
+                r.id,
                 s.nama AS nama_sekolah,
                 r.total_score,
                 r.tanggal
@@ -258,5 +259,52 @@ export default class ReviewModel {
             throw error;
         }
 
+    }
+
+    // Get reviews for a specific school (for pengelola)
+    static async getReviewsBySchoolId(school_id) {
+        try {
+            const query = `
+                SELECT
+                    r.id,
+                    r.total_score,
+                    r.tanggal,
+                    ar.nama_lengkap AS reviewer_name
+                FROM reviews r
+                LEFT JOIN users u ON r.reviewer_id = u.id
+                LEFT JOIN account_requests ar ON u.account_req_id = ar.id
+                WHERE r.school_id = $1
+                ORDER BY r.tanggal DESC
+            `;
+            const result = await db.query(query, [school_id]);
+            return result.rows;
+        } catch (error) {
+            console.error("DB ERROR [ReviewModel.getReviewsBySchoolId]:", error.message);
+            throw error;
+        }
+    }
+
+    // Get all reviews (for admin)
+    static async getAllReviews() {
+        try {
+            const query = `
+                SELECT
+                    r.id,
+                    r.total_score,
+                    r.tanggal,
+                    s.nama AS nama_sekolah,
+                    ar.nama_lengkap AS reviewer_name
+                FROM reviews r
+                LEFT JOIN schools s ON r.school_id = s.id
+                LEFT JOIN users u ON r.reviewer_id = u.id
+                LEFT JOIN account_requests ar ON u.account_req_id = ar.id
+                ORDER BY r.tanggal DESC
+            `;
+            const result = await db.query(query);
+            return result.rows;
+        } catch (error) {
+            console.error("DB ERROR [ReviewModel.getAllReviews]:", error.message);
+            throw error;
+        }
     }
 }

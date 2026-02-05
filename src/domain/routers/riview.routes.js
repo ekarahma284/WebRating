@@ -9,20 +9,19 @@ const router = express.Router();
 // REVIEW UTAMA
 // ======================================================
 
+// Get list reviews based on user role (reviewer, pengelola, admin)
+router.get(
+  "/",
+  authMiddleware.verify,
+  ReviewController.getListReviews
+);
+
 // Create review baru (khusus reviewer)
 router.post(
   "/",
   authMiddleware.verify,
   roleMiddleware(ROLES.REVIEWER),
   ReviewController.createReview
-);
-
-// Ambil semua review berdasarkan sekolah
-router.get(
-  "/school",
-  authMiddleware.verify,
-  roleMiddleware(ROLES.REVIEWER),
-  ReviewController.getReviewBySchool
 );
 
 // Ambil Detail Review berdasarkan school_id
@@ -96,13 +95,6 @@ router.get(
   authMiddleware.verify,
   roleMiddleware(ROLES.REVIEWER),
   ReviewController.getSchoolScores
-);
-
-router.get(
-  "/dashboard/my-reviews",
-  authMiddleware.verify,
-  roleMiddleware(ROLES.REVIEWER),
-  ReviewController.getMyReviews
 );
 
 router.get(

@@ -136,7 +136,10 @@ export default class AccountRequestService {
 
         return {
           user: createdUser,
-          defaultPassword: rawPassword,
+          login_credentials: {
+            username: username,
+            password: rawPassword,
+          },
         };
       }
 
@@ -164,7 +167,10 @@ export default class AccountRequestService {
 
         return {
           user: createdUser,
-          defaultPassword: rawPassword,
+          login_credentials: {
+            username: username,
+            password: rawPassword,
+          },
         };
       }
 
