@@ -100,4 +100,15 @@ export default class AccountRequestModel {
       throw error;
     }
   }
+
+  static async findPendingByNpsn(npsn) {
+    try {
+      const query = `SELECT * FROM account_requests WHERE npsn = $1 AND status = 'pending'`;
+      const result = await db.query(query, [npsn]);
+      return result.rows[0];
+    } catch (error) {
+      console.error("DB ERROR [AccountRequestModel.findPendingByNpsn]:", error.message);
+      throw error;
+    }
+  }
 }
