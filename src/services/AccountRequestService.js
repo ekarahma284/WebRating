@@ -5,6 +5,7 @@ import AccountRequestModel from "../models/AccountRequestModel.js";
 import SchoolsService from "./SchoolService.js";
 import UserService from "./UserService.js";
 import UserModel from "../models/userModel.js";
+import { hashPassword } from "../utils/password.js";
 
 export default class AccountRequestService {
   // ============================================
@@ -14,6 +15,34 @@ export default class AccountRequestService {
     // Validate role
     if (!payload.role || !REQUESTABLE_ROLES.includes(payload.role)) {
       const e = new Error("Invalid role");
+      e.status = 400;
+      throw e;
+    }
+
+    // Validate username & password (required for all roles)
+    if (!payload.username || typeof payload.username !== "string" || payload.username.trim().length < 3) {
+      const e = new Error("Username wajib diisi (minimal 3 karakter)");
+      e.status = 400;
+      throw e;
+    }
+    if (!payload.password || typeof payload.password !== "string" || payload.password.length < 6) {
+      const e = new Error("Password wajib diisi (minimal 6 karakter)");
+      e.status = 400;
+      throw e;
+    }
+
+    // Check username uniqueness against existing users
+    const existingUser = await UserModel.findByUsername(payload.username);
+    if (existingUser) {
+      const e = new Error("Username sudah terdaftar");
+      e.status = 400;
+      throw e;
+    }
+
+    // Check username uniqueness against pending requests
+    const existingRequest = await AccountRequestModel.findPendingByUsername(payload.username);
+    if (existingRequest) {
+      const e = new Error("Username sudah digunakan pada permintaan yang sedang pending");
       e.status = 400;
       throw e;
     }
@@ -42,22 +71,18 @@ export default class AccountRequestService {
         throw e;
       }
 
-      // Check if NPSN already registered as user
-      const existingUser = await UserModel.findByUsername(payload.npsn);
-      if (existingUser) {
-        const e = new Error("NPSN sudah terdaftar sebagai pengguna");
-        e.status = 400;
-        throw e;
-      }
-
       // Check if there's already a pending request with same NPSN
-      const existingRequest = await AccountRequestModel.findPendingByNpsn(payload.npsn);
-      if (existingRequest) {
+      const existingNpsnRequest = await AccountRequestModel.findPendingByNpsn(payload.npsn);
+      if (existingNpsnRequest) {
         const e = new Error("Sudah ada permintaan pending dengan NPSN yang sama");
         e.status = 400;
         throw e;
       }
     }
+
+    // Hash password and remove raw password
+    payload.password_hash = await hashPassword(payload.password);
+    delete payload.password;
 
     // Save to DB
     return await AccountRequestModel.create(payload);
@@ -94,87 +119,31 @@ export default class AccountRequestService {
         );
       }
 
-      // =============================
-      // Generate Username
-      // =============================
-      let username = null;
-
-      if (reqRow.role === ROLES.PENGELOLA && reqRow.npsn) {
-        username = reqRow.npsn; // username = NPSN
-      } else if (reqRow.email) {
-        username = reqRow.email.split("@")[0]; // ambil depan email
-      } else {
-        username =
-          `${reqRow.nama_lengkap.toLowerCase().replace(/\s+/g, ".")}` +
-          `.${Math.floor(Math.random() * 1000)}`;
+      if (!reqRow.username || !reqRow.password_hash) {
+        throw new Error("Request tidak memiliki kredensial (username/password)");
       }
 
-      let rawPassword = null;
+      // Create user with stored credentials
+      const createdUser = await UserService.createUser(
+        {
+          username: reqRow.username,
+          password_hash: reqRow.password_hash,
+          role: reqRow.role,
+          must_change_password: false,
+          account_req_id: reqRow.id,
+        },
+        client,
+      );
 
-      // =============================
-      // CASE: PENGELOLA
-      // =============================
-      if (reqRow.role === ROLES.PENGELOLA) {
-        rawPassword = "pengelola123";
-
-        const createdUser = await UserService.createUser(
-          {
-            username,
-            password: rawPassword,
-            role: reqRow.role,
-            must_change_password: true,
-            account_req_id: reqRow.id,
-          },
-          client,
-        );
-
-        // Claim sekolah untuk pengelola
+      // Claim school for pengelola
+      if (reqRow.role === ROLES.PENGELOLA && reqRow.id_school) {
         await SchoolsService.claimSchool(reqRow.id_school, createdUser.id);
-
-        await AccountRequestModel.updateStatus(id, "accepted", client);
-        await client.query("COMMIT");
-
-        return {
-          user: createdUser,
-          login_credentials: {
-            username: username,
-            password: rawPassword,
-          },
-        };
       }
 
-      // =============================
-      // CASE: REVIEWER (BARU DITAMBAHKAN)
-      // =============================
-      if (reqRow.role === ROLES.REVIEWER) {
-        rawPassword = "reviewer123";
+      await AccountRequestModel.updateStatus(id, "accepted", client);
+      await client.query("COMMIT");
 
-        const createdUser = await UserService.createUser(
-          {
-            username,
-            password: rawPassword,
-            role: ROLES.REVIEWER,
-            must_change_password: true,
-            account_req_id: reqRow.id,
-          },
-          client,
-        );
-
-        // Reviewer TIDAK klaim sekolah
-
-        await AccountRequestModel.updateStatus(id, "accepted", client);
-        await client.query("COMMIT");
-
-        return {
-          user: createdUser,
-          login_credentials: {
-            username: username,
-            password: rawPassword,
-          },
-        };
-      }
-
-      throw new Error("Unknown role");
+      return { user: createdUser };
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;

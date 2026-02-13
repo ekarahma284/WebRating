@@ -145,6 +145,7 @@ export default class ReviewModel {
             const query = `
             SELECT
                 r.id,
+                r.school_id,
                 s.nama AS nama_sekolah,
                 r.total_score,
                 r.tanggal
@@ -195,15 +196,19 @@ export default class ReviewModel {
         try {
             const query = `
             SELECT
+                r.id AS review_id,
+                r.school_id,
                 s.nama AS nama_sekolah,
                 s.website,
                 ar.nama_lengkap as nama_reviewer,
+                r.total_score,
                 r.tanggal AS tanggal_review
             FROM reviews r
             LEFT JOIN schools s ON r.school_id = s.id
             LEFT JOIN users u ON r.reviewer_id = u.id
-            LEFT JOIN account_requests ar ON u.account_req_id = ar.id 
-            WHERE r.school_id = $1`
+            LEFT JOIN account_requests ar ON u.account_req_id = ar.id
+            WHERE r.school_id = $1
+            ORDER BY r.tanggal DESC`
             const result = await db.query(query, [school_id]);
             return result.rows;
         } catch (error) {

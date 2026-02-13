@@ -13,9 +13,11 @@ export default class UserService {
   }
 
   static async createUser(data) {
+    const hasPreHashedPassword = !!data.password_hash;
+
     const validation = validate(data, {
       username: { required: true, type: "string", min: 3 },
-      password: { required: true, type: "string", min: 6 },
+      password: { required: !hasPreHashedPassword, type: "string", min: 6 },
       role: {
         required: true,
         type: "string",
@@ -37,7 +39,9 @@ export default class UserService {
     let payload = {
       username: data.username,
       role: data.role,
-      password_hash: await hashPassword(data.password),
+      password_hash: hasPreHashedPassword
+        ? data.password_hash
+        : await hashPassword(data.password),
       must_change_password: data.must_change_password ?? true,
       is_active: true,
     };

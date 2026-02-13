@@ -2,6 +2,12 @@
 import db from "../config/db.js";
 import pool from "../config/db.js";
 
+const safeColumns = `
+  id, role, nama_lengkap, email, no_whatsapp, pendidikan_terakhir,
+  profesi, jabatan, npsn, upload_cv, upload_surat_kuasa, status, id_school,
+  username, created_at
+`;
+
 export default class AccountRequestModel {
 
   static async create(payload) {
@@ -9,9 +15,10 @@ export default class AccountRequestModel {
       const query = `
       INSERT INTO account_requests (
         role, nama_lengkap, email, no_whatsapp, pendidikan_terakhir,
-        profesi, jabatan, npsn, upload_cv, upload_surat_kuasa, status, id_school
+        profesi, jabatan, npsn, upload_cv, upload_surat_kuasa, status, id_school,
+        username, password_hash
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending',$11,$12,$13
       ) RETURNING *;
     `;
 
@@ -26,7 +33,9 @@ export default class AccountRequestModel {
         payload.npsn || null,
         payload.upload_cv || null,
         payload.upload_surat_kuasa || null,
-        payload.id_school || null
+        payload.id_school || null,
+        payload.username,
+        payload.password_hash
       ];
 
       const result = await db.query(query, values);
@@ -40,7 +49,7 @@ export default class AccountRequestModel {
 
   static async listAll() {
     const result = await pool.query(
-      "SELECT * FROM account_requests ORDER BY created_at DESC"
+      `SELECT ${safeColumns} FROM account_requests ORDER BY created_at DESC`
     );
     return result.rows;
   }
@@ -76,11 +85,22 @@ export default class AccountRequestModel {
 
   static async findById(id) {
     try {
-      const query = `SELECT * FROM account_requests WHERE id = $1`;
+      const query = `SELECT ${safeColumns} FROM account_requests WHERE id = $1`;
       const result = await db.query(query, [id]);
       return result.rows[0];
     } catch (error) {
       console.error("DB ERROR [AccountRequestModel.findById]:", error.message);
+      throw error;
+    }
+  }
+
+  static async findPendingByUsername(username) {
+    try {
+      const query = `SELECT id FROM account_requests WHERE username = $1 AND status = 'pending'`;
+      const result = await db.query(query, [username]);
+      return result.rows[0];
+    } catch (error) {
+      console.error("DB ERROR [AccountRequestModel.findPendingByUsername]:", error.message);
       throw error;
     }
   }

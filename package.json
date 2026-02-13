@@ -5,7 +5,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "migrate:fresh": "node src/database/migrate-fresh.js",
+    "db:seed": "node src/database/seeders/AdminSeeder.js",
+    "migrate:fresh:seed": "node src/database/migrate-fresh.js && node src/database/seeders/AdminSeeder.js"
   },
   "type": "module",
   "keywords": [],

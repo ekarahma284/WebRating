@@ -45,11 +45,12 @@ export default class AccountRequestController {
       }
 
       const result = await AccountRequestService.create(payload);
+      const { password_hash, ...safeResult } = result;
 
       return res.status(201).json({
         success: true,
         message: "Account request created successfully",
-        data: result,
+        data: safeResult,
       });
     } catch (error) {
       console.error(error);

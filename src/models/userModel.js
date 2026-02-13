@@ -59,7 +59,7 @@ export default class UserModel {
       const query = `
                 INSERT INTO users (role, username, password_hash, must_change_password, is_active, account_req_id)
                 VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING *;
+                RETURNING ${baseUserFields};
             `;
       const values = [
         data.role,
