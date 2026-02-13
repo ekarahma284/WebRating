@@ -121,6 +121,22 @@ export default class AccountRequestModel {
     }
   }
 
+  static async findAcceptedReviewers() {
+    try {
+      const query = `
+        SELECT id, nama_lengkap, profesi, pendidikan_terakhir
+        FROM account_requests
+        WHERE role = 'reviewer' AND status = 'accepted'
+        ORDER BY created_at DESC
+      `;
+      const result = await db.query(query);
+      return result.rows;
+    } catch (error) {
+      console.error("DB ERROR [AccountRequestModel.findAcceptedReviewers]:", error.message);
+      throw error;
+    }
+  }
+
   static async findPendingByNpsn(npsn) {
     try {
       const query = `SELECT * FROM account_requests WHERE npsn = $1 AND status = 'pending'`;

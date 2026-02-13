@@ -95,6 +95,13 @@ export default class AccountRequestService {
   }
 
   // ============================================
+  // LIST ACCEPTED REVIEWERS (public)
+  // ============================================
+  static async listAcceptedReviewers() {
+    return await AccountRequestModel.findAcceptedReviewers();
+  }
+
+  // ============================================
   // GET REQUEST BY ID
   // ============================================
   static async getById(id) {

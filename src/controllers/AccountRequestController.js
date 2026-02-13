@@ -62,6 +62,18 @@ export default class AccountRequestController {
   }
 
   // ============================================
+  // GET ACCEPTED REVIEWERS (public)
+  // ============================================
+  static async listReviewersPublic(req, res) {
+    try {
+      const rows = await AccountRequestService.listAcceptedReviewers();
+      return res.json({ success: true, data: rows });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  // ============================================
   // GET ALL REQUESTS
   // ============================================
   static async list(req, res) {

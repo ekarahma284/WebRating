@@ -7,6 +7,10 @@ import upload, { handleUploadErrors } from "../../middlewares/uploadMiddleware.j
 const router = Router();
 
 // ROUTES
+
+// list accepted reviewers (public)
+router.get("/reviewers/public", AccountRequestController.listReviewersPublic);
+
 // create
 router.post(
     "/",
