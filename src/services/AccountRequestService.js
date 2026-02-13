@@ -61,8 +61,7 @@ export default class AccountRequestService {
       if (
         !payload.nama_lengkap ||
         !payload.npsn ||
-        !payload.upload_surat_kuasa ||
-        !payload.id_school
+        !payload.upload_surat_kuasa
       ) {
         const e = new Error(
           "Nama lengkap, NPSN & upload_surat_kuasa required for pengelola",
