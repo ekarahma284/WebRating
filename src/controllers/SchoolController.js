@@ -8,13 +8,14 @@ export default class SchoolController {
 
   static async getAllSchools(req, res) {
     try {
-      const { province_id, regency_id, district_id, village_id } = req.query;
+      const { province_id, regency_id, district_id, village_id, jenjang } = req.query;
       const filters = {};
 
       if (province_id) filters.province_id = province_id;
       if (regency_id) filters.regency_id = regency_id;
       if (district_id) filters.district_id = district_id;
       if (village_id) filters.village_id = village_id;
+      if (jenjang) filters.jenjang = jenjang;
 
       const schools = await SchoolService.getAllSchools(filters);
 

@@ -30,6 +30,10 @@ export default class SchoolModel {
                 conditions.push(`village_id = $${idx++}`);
                 values.push(filters.village_id);
             }
+            if (filters.jenjang) {
+                conditions.push(`jenjang = $${idx++}`);
+                values.push(filters.jenjang);
+            }
 
             if (conditions.length > 0) {
                 query += ` WHERE ${conditions.join(" AND ")}`;
