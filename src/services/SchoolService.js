@@ -109,7 +109,7 @@ export default class SchoolsService {
       throw err;
     }
 
-    return await SchoolModel.update(id, data);
+    return await SchoolModel.updateFull(id, data);
   }
 
   // ============================================
