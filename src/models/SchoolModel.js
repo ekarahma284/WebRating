@@ -7,10 +7,36 @@ export default class SchoolModel {
     // ======================================================
     // GET ALL SCHOOLS
     // ======================================================
-    static async findAll() {
+    static async findAll(filters = {}) {
         try {
-            const query = `SELECT * FROM ${this.table} ORDER BY created_at DESC`;
-            const result = await db.query(query);
+            let query = `SELECT * FROM ${this.table}`;
+            const conditions = [];
+            const values = [];
+            let idx = 1;
+
+            if (filters.province_id) {
+                conditions.push(`province_id = $${idx++}`);
+                values.push(filters.province_id);
+            }
+            if (filters.regency_id) {
+                conditions.push(`regency_id = $${idx++}`);
+                values.push(filters.regency_id);
+            }
+            if (filters.district_id) {
+                conditions.push(`district_id = $${idx++}`);
+                values.push(filters.district_id);
+            }
+            if (filters.village_id) {
+                conditions.push(`village_id = $${idx++}`);
+                values.push(filters.village_id);
+            }
+
+            if (conditions.length > 0) {
+                query += ` WHERE ${conditions.join(" AND ")}`;
+            }
+
+            query += ` ORDER BY created_at DESC`;
+            const result = await db.query(query, values);
             return result.rows;
         } catch (error) {
             console.error("DB ERROR [SchoolModel.findAll]:", error.message);
@@ -40,14 +66,18 @@ export default class SchoolModel {
         try {
             const query = `
                 INSERT INTO ${this.table}
-                (nama, npsn, foto, is_claimed)
-                VALUES ($1, $2, $3, $4)
+                (nama, npsn, foto, province_id, regency_id, district_id, village_id, is_claimed)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING *;
             `;
             const values = [
                 data.nama,
                 data.npsn ?? null,
                 data.foto ?? null,
+                data.province_id ?? null,
+                data.regency_id ?? null,
+                data.district_id ?? null,
+                data.village_id ?? null,
                 false
             ];
 
@@ -81,7 +111,7 @@ export default class SchoolModel {
         try {
             const query = `
                 UPDATE ${this.table}
-                SET 
+                SET
                     nama=$1,
                     npsn=$2,
                     alamat=$3,
@@ -91,8 +121,12 @@ export default class SchoolModel {
                     website=$7,
                     jenjang=$8,
                     status_sekolah=$9,
-                    foto=$10
-                WHERE id=$11
+                    foto=$10,
+                    province_id=$11,
+                    regency_id=$12,
+                    district_id=$13,
+                    village_id=$14
+                WHERE id=$15
                 RETURNING *;
             `;
 
@@ -107,6 +141,10 @@ export default class SchoolModel {
                 data.jenjang,
                 data.status_sekolah,
                 data.foto,
+                data.province_id,
+                data.regency_id,
+                data.district_id,
+                data.village_id,
                 id
             ];
 

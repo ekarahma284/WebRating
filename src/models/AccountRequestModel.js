@@ -47,10 +47,48 @@ export default class AccountRequestModel {
     }
   }
 
-  static async listAll() {
-    const result = await pool.query(
-      `SELECT ${safeColumns} FROM account_requests ORDER BY created_at DESC`
-    );
+  static async listAll(filters = {}) {
+    let query = `
+      SELECT ar.id, ar.role, ar.nama_lengkap, ar.email, ar.no_whatsapp,
+        ar.pendidikan_terakhir, ar.profesi, ar.jabatan, ar.npsn,
+        ar.upload_cv, ar.upload_surat_kuasa, ar.status, ar.id_school,
+        ar.username, ar.created_at
+      FROM account_requests ar
+    `;
+
+    const conditions = [];
+    const values = [];
+    let idx = 1;
+    const hasLocationFilter = filters.province_id || filters.regency_id || filters.district_id || filters.village_id;
+
+    if (hasLocationFilter) {
+      query += ` LEFT JOIN schools s ON ar.id_school = s.id`;
+    }
+
+    if (filters.province_id) {
+      conditions.push(`s.province_id = $${idx++}`);
+      values.push(filters.province_id);
+    }
+    if (filters.regency_id) {
+      conditions.push(`s.regency_id = $${idx++}`);
+      values.push(filters.regency_id);
+    }
+    if (filters.district_id) {
+      conditions.push(`s.district_id = $${idx++}`);
+      values.push(filters.district_id);
+    }
+    if (filters.village_id) {
+      conditions.push(`s.village_id = $${idx++}`);
+      values.push(filters.village_id);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(" AND ")}`;
+    }
+
+    query += ` ORDER BY ar.created_at DESC`;
+
+    const result = await pool.query(query, values);
     return result.rows;
   }
 

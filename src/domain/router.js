@@ -13,6 +13,7 @@ import uploadRoutes from "./routers/upload.routes.js";
 import summaryRoutes from "./routers/summary.routes.js";
 import adminDashboardRoutes from "./routers/dashboard.routes.js";
 import managerRoutes from "./routers/manager.routes.js";
+import dataRoutes from "./routers/data.routes.js";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -28,5 +29,6 @@ router.use("/summary", summaryRoutes);
 router.use("/sse", (await import("./routers/sse.js")).default);
 router.use("/admin", adminDashboardRoutes);
 router.use("/manager", managerRoutes);
+router.use("/data", dataRoutes);
 
 export default router;

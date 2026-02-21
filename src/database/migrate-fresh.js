@@ -37,8 +37,10 @@ const createTables = `
     jenjang VARCHAR,
     status_sekolah VARCHAR,
     foto TEXT,
-    kecamatan VARCHAR,
-    kabupaten VARCHAR,
+    province_id VARCHAR,
+    regency_id VARCHAR,
+    district_id VARCHAR,
+    village_id VARCHAR,
     is_claimed BOOLEAN DEFAULT FALSE,
     claimed_by UUID,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

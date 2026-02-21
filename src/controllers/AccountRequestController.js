@@ -78,7 +78,15 @@ export default class AccountRequestController {
   // ============================================
   static async list(req, res) {
     try {
-      const rows = await AccountRequestService.listAll();
+      const { province_id, regency_id, district_id, village_id } = req.query;
+      const filters = {};
+
+      if (province_id) filters.province_id = province_id;
+      if (regency_id) filters.regency_id = regency_id;
+      if (district_id) filters.district_id = district_id;
+      if (village_id) filters.village_id = village_id;
+
+      const rows = await AccountRequestService.listAll(filters);
       return res.json({ success: true, data: rows });
     } catch (error) {
       return res.status(500).json({ success: false, message: error.message });

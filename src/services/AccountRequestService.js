@@ -90,8 +90,8 @@ export default class AccountRequestService {
   // ============================================
   // LIST ALL REQUESTS (admin)
   // ============================================
-  static async listAll() {
-    return await AccountRequestModel.listAll();
+  static async listAll(filters = {}) {
+    return await AccountRequestModel.listAll(filters);
   }
 
   // ============================================
