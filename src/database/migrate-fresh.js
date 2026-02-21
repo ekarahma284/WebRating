@@ -19,6 +19,7 @@ const dropAll = `
   DROP TABLE IF EXISTS users CASCADE;
   DROP TABLE IF EXISTS account_requests CASCADE;
   DROP TABLE IF EXISTS schools CASCADE;
+  DROP TABLE IF EXISTS app_settings CASCADE;
 `;
 
 const createTables = `
@@ -173,6 +174,21 @@ const createTables = `
     token TEXT NOT NULL UNIQUE,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  -- ==============================
+  -- APP SETTINGS
+  -- ==============================
+  CREATE TABLE app_settings (
+    id SERIAL PRIMARY KEY,
+    about_us TEXT,
+    address TEXT,
+    phone VARCHAR,
+    email VARCHAR,
+    facebook VARCHAR,
+    instagram VARCHAR,
+    whatsapp VARCHAR,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 `;
 

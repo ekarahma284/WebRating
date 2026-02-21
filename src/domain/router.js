@@ -14,6 +14,7 @@ import summaryRoutes from "./routers/summary.routes.js";
 import adminDashboardRoutes from "./routers/dashboard.routes.js";
 import managerRoutes from "./routers/manager.routes.js";
 import dataRoutes from "./routers/data.routes.js";
+import appSettingsRoutes from "./routers/appSettings.routes.js";
 const router = Router();
 
 router.use("/auth", authRoutes);
@@ -30,5 +31,6 @@ router.use("/sse", (await import("./routers/sse.js")).default);
 router.use("/admin", adminDashboardRoutes);
 router.use("/manager", managerRoutes);
 router.use("/data", dataRoutes);
+router.use("/settings", appSettingsRoutes);
 
 export default router;
